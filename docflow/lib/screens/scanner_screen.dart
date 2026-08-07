@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../core/tokens.dart';
-import '../models/conversion_tool.dart';
-import 'convert_screen.dart';
+import '../models/scan_mode.dart';
+import '../widgets/scan_overlays.dart';
+import '../widgets/scanner_chrome.dart';
+import 'scan_edit_screen.dart';
 
-/// Scan. ProScan's capture screen, unchanged in layout: dark ground, blue crop
-/// handles over the viewport, format tabs above a progress-ring shutter.
+/// Capture. Dark chrome, a full-bleed camera feed, the framing guide for the
+/// chosen subject, and a mode strip above the shutter.
 ///
-/// In DocFlow this is a secondary entry point — reached from the Scan button on
-/// the shell, not from a tab — and a capture lands in the library as a PDF.
+/// In DocFlow this is a secondary entry point — reached from the camera button
+/// on the shell, not from a tab — and a capture lands in the library as a PDF.
 class ScannerScreen extends StatefulWidget {
-  const ScannerScreen({super.key});
+  const ScannerScreen({super.key, this.initialMode = ScanMode.document});
+
+  final ScanMode initialMode;
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
@@ -19,26 +23,24 @@ class ScannerScreen extends StatefulWidget {
 
 class _ScannerScreenState extends State<ScannerScreen>
     with TickerProviderStateMixin {
-  static const _formats = ['Book', 'ID Card', 'Document', 'Business Card'];
-
-  int _format = 2;
+  late ScanMode _mode = widget.initialMode;
   bool _flashOn = false;
   bool _capturing = false;
 
-  // The scan line sweeps down and back; the ring fills once per capture.
-  late final AnimationController _scan = AnimationController(
+  // The finder line sweeps down and back; the ring fills once per capture.
+  late final AnimationController _sweep = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 2400),
   )..repeat(reverse: true);
 
   late final AnimationController _shutter = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1600),
+    duration: const Duration(milliseconds: 1200),
   );
 
   @override
   void dispose() {
-    _scan.dispose();
+    _sweep.dispose();
     _shutter.dispose();
     super.dispose();
   }
@@ -49,57 +51,51 @@ class _ScannerScreenState extends State<ScannerScreen>
     await _shutter.forward(from: 0);
     if (!mounted) return;
     setState(() => _capturing = false);
-    _showResult();
-  }
 
-  Future<void> _showResult() async {
-    final convert = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _ResultSheet(format: _formats[_format]),
-    );
-    if (!mounted) return;
-    if (convert ?? false) {
-      // A scan lands as a PDF, so open the converter with a PDF tool ready.
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ConvertScreen(
-            initialTool: ConversionTool.byId('pdf-to-word'),
-          ),
-        ),
+    // Codes resolve in place; page scans continue to the editor.
+    if (_mode.isCode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${_mode.label} detected')),
       );
+      return;
     }
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ScanEditScreen(mode: _mode)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
-      body: Stack(
+      body: Column(
         children: [
-          Positioned.fill(child: _Viewport(scan: _scan, capturing: _capturing)),
           SafeArea(
-            child: Column(
-              children: [
-                _TopBar(
-                  flashOn: _flashOn,
-                  onClose: () => Navigator.of(context).pop(),
-                  onToggleFlash: () => setState(() => _flashOn = !_flashOn),
-                ),
-                const Spacer(),
-                _FormatTabs(
-                  formats: _formats,
-                  index: _format,
-                  onChanged: (i) => setState(() => _format = i),
-                ),
-                const SizedBox(height: 20),
-                _Controls(
-                  progress: _shutter,
-                  capturing: _capturing,
-                  onCapture: _capture,
-                ),
-                const SizedBox(height: 12),
-              ],
+            bottom: false,
+            child: _mode.isCode
+                ? _CodeHeader(
+                    mode: _mode,
+                    onBack: () => Navigator.of(context).pop(),
+                  )
+                : _CaptureHeader(
+                    flashOn: _flashOn,
+                    onBack: () => Navigator.of(context).pop(),
+                    onToggleFlash: () =>
+                        setState(() => _flashOn = !_flashOn),
+                  ),
+          ),
+          Expanded(child: _Viewfinder(mode: _mode, sweep: _sweep)),
+          _ModeStrip(
+            mode: _mode,
+            onChanged: (m) => setState(() => _mode = m),
+          ),
+          SafeArea(
+            top: false,
+            child: _ControlBar(
+              mode: _mode,
+              progress: _shutter,
+              capturing: _capturing,
+              onCapture: _capture,
             ),
           ),
         ],
@@ -108,345 +104,315 @@ class _ScannerScreenState extends State<ScannerScreen>
   }
 }
 
-/// Camera stand-in with the crop frame. A real preview would sit behind the
-/// same overlay.
-class _Viewport extends StatelessWidget {
-  const _Viewport({required this.scan, required this.capturing});
+/// Header for page scans: back, then auto-detect, enhance, flash and more.
+class _CaptureHeader extends StatelessWidget {
+  const _CaptureHeader({
+    required this.flashOn,
+    required this.onBack,
+    required this.onToggleFlash,
+  });
 
-  final Animation<double> scan;
-  final bool capturing;
+  final bool flashOn;
+  final VoidCallback onBack;
+  final VoidCallback onToggleFlash;
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: AppColors.darkSurface,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 96, 28, 220),
-          child: AspectRatio(
-            aspectRatio: 3 / 4,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(AppRadius.tile),
-                  ),
-                  child: const Center(
-                    child: Icon(LucideIcons.fileText,
-                        size: 72, color: AppColors.darkDivider),
-                  ),
-                ),
-                if (!capturing)
-                  AnimatedBuilder(
-                    animation: scan,
-                    builder: (context, _) => CustomPaint(
-                      painter: _ScanLinePainter(scan.value),
-                    ),
-                  ),
-                const CustomPaint(painter: _CropHandlesPainter()),
-              ],
+    return SizedBox(
+      height: 76,
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: onBack,
+            icon: const Icon(LucideIcons.arrowLeft,
+                color: Colors.white, size: 26),
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: () {},
+            tooltip: 'Auto detect edges',
+            icon: const Icon(LucideIcons.scanLine,
+                color: Colors.white, size: 24),
+          ),
+          IconButton(
+            onPressed: () {},
+            tooltip: 'Enhance',
+            icon: const Icon(LucideIcons.wand2, color: Colors.white, size: 24),
+          ),
+          IconButton(
+            onPressed: onToggleFlash,
+            tooltip: flashOn ? 'Flash on' : 'Flash off',
+            icon: Icon(
+              flashOn ? LucideIcons.zap : LucideIcons.zapOff,
+              color: flashOn ? AppColors.amber : Colors.white,
+              size: 24,
             ),
           ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(LucideIcons.moreHorizontal,
+                color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+}
+
+/// Header for code scans: back arrow over a centred title and instruction.
+class _CodeHeader extends StatelessWidget {
+  const _CodeHeader({required this.mode, required this.onBack});
+
+  final ScanMode mode;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 76,
+          child: Row(
+            children: [
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: onBack,
+                icon: const Icon(LucideIcons.arrowLeft,
+                    color: Colors.white, size: 26),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: Text(
+            'Scan ${mode.label}',
+            style: theme.textTheme.displayMedium?.copyWith(
+              color: Colors.white,
+              fontSize: 32,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Text(
+            mode.hint ?? '',
+            style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The camera area. A real preview would sit where the placeholder is; the
+/// framing guide for the active mode is painted over it.
+class _Viewfinder extends StatelessWidget {
+  const _Viewfinder({required this.mode, required this.sweep});
+
+  final ScanMode mode;
+  final Animation<double> sweep;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const ColoredBox(color: AppColors.darkSurface),
+          Center(
+            child: Icon(mode.icon, size: 64, color: AppColors.darkDivider),
+          ),
+          // Book mode guides the whole frame; the rest frame a subject.
+          if (mode.isSplit)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: SplitOverlay(),
+            )
+          else
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 26),
+                child: AspectRatio(
+                  aspectRatio: mode.aspectRatio,
+                  child: mode.hasFinder
+                      ? FinderOverlay(sweep: sweep)
+                      : const CropHandlesOverlay(),
+                ),
+              ),
+            ),
+          if (mode == ScanMode.idCard)
+            Align(
+              alignment: const Alignment(0, -0.55),
+              child: DarkPill(label: mode.hint!),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Horizontally scrolling subject modes. The active one is primary with a bar
+/// above it; the strip keeps the selection centred.
+class _ModeStrip extends StatefulWidget {
+  const _ModeStrip({required this.mode, required this.onChanged});
+
+  final ScanMode mode;
+  final ValueChanged<ScanMode> onChanged;
+
+  @override
+  State<_ModeStrip> createState() => _ModeStripState();
+}
+
+class _ModeStripState extends State<_ModeStrip> {
+  final _controller = ScrollController();
+  final _keys = {for (final m in ScanMode.values) m: GlobalKey()};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _centre());
+  }
+
+  @override
+  void didUpdateWidget(_ModeStrip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mode != widget.mode) _centre();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _centre() {
+    final context = _keys[widget.mode]?.currentContext;
+    if (context == null) return;
+    Scrollable.ensureVisible(
+      context,
+      alignment: 0.5,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 62,
+      color: AppColors.darkBackground,
+      child: SingleChildScrollView(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          children: [
+            for (final mode in ScanMode.values)
+              _ModeTab(
+                key: _keys[mode],
+                mode: mode,
+                selected: mode == widget.mode,
+                onTap: () => widget.onChanged(mode),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// The four blue L-brackets marking the detected page edges.
-class _CropHandlesPainter extends CustomPainter {
-  const _CropHandlesPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const arm = 30.0;
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    void corner(Offset at, double dx, double dy) {
-      canvas.drawLine(at, at.translate(arm * dx, 0), paint);
-      canvas.drawLine(at, at.translate(0, arm * dy), paint);
-    }
-
-    corner(Offset.zero, 1, 1);
-    corner(Offset(size.width, 0), -1, 1);
-    corner(Offset(0, size.height), 1, -1);
-    corner(Offset(size.width, size.height), -1, -1);
-  }
-
-  @override
-  bool shouldRepaint(_CropHandlesPainter oldDelegate) => false;
-}
-
-/// Soft blue sweep line, glow trailing behind it.
-class _ScanLinePainter extends CustomPainter {
-  const _ScanLinePainter(this.t);
-
-  final double t;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final y = size.height * t;
-    canvas.drawRect(
-      Rect.fromLTWH(0, y - 26, size.width, 26),
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0x004B68FF), Color(0x554B68FF)],
-        ).createShader(Rect.fromLTWH(0, y - 26, size.width, 26)),
-    );
-    canvas.drawLine(
-      Offset(0, y),
-      Offset(size.width, y),
-      Paint()
-        ..color = AppColors.primary
-        ..strokeWidth = 2,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ScanLinePainter oldDelegate) => oldDelegate.t != t;
-}
-class _TopBar extends StatelessWidget {
-  const _TopBar({
-    required this.flashOn,
-    required this.onClose,
-    required this.onToggleFlash,
+class _ModeTab extends StatelessWidget {
+  const _ModeTab({
+    super.key,
+    required this.mode,
+    required this.selected,
+    required this.onTap,
   });
 
-  final bool flashOn;
-  final VoidCallback onClose;
-  final VoidCallback onToggleFlash;
+  final ScanMode mode;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: onClose,
-            icon: const Icon(LucideIcons.x, color: Colors.white),
-          ),
-          const Spacer(),
-          Text(
-            'Scan Document',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(color: Colors.white),
-          ),
-          const Spacer(),
-          IconButton(
-            onPressed: onToggleFlash,
-            icon: Icon(
-              flashOn ? LucideIcons.zap : LucideIcons.zapOff,
-              color: flashOn ? AppColors.amber : Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-/// Horizontally scrolling capture modes; the active one is a filled pill.
-class _FormatTabs extends StatelessWidget {
-  const _FormatTabs({
-    required this.formats,
-    required this.index,
-    required this.onChanged,
-  });
-
-  final List<String> formats;
-  final int index;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          for (var i = 0; i < formats.length; i++) ...[
-            GestureDetector(
-              onTap: () => onChanged(i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                decoration: BoxDecoration(
-                  color: i == index
-                      ? AppColors.primary
-                      : Colors.white.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Text(
-                  formats[i],
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: i == index
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.70),
-                  ),
-                ),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 5,
+              width: selected ? 72 : 0,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
-            if (i < formats.length - 1) const SizedBox(width: 10),
+            const SizedBox(height: 14),
+            Text(
+              mode.label,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: selected ? AppColors.primary : Colors.white,
+              ),
+            ),
           ],
-        ],
+        ),
       ),
     );
   }
 }
-/// Gallery, shutter, flip. The shutter's ring fills while a capture runs —
-/// the same progress-ring motion ProScan uses.
-class _Controls extends StatelessWidget {
-  const _Controls({
+
+/// Import buttons, the shutter, and the last capture. Code modes have nothing
+/// to review, so the thumbnail slot stays empty to keep the shutter centred.
+class _ControlBar extends StatelessWidget {
+  const _ControlBar({
+    required this.mode,
     required this.progress,
     required this.capturing,
     required this.onCapture,
   });
 
+  final ScanMode mode;
   final Animation<double> progress;
   final bool capturing;
   final VoidCallback onCapture;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+    return Container(
+      color: AppColors.darkBackground,
+      padding: const EdgeInsets.fromLTRB(38, 18, 38, 22),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _GhostButton(icon: LucideIcons.image, onPressed: () {}),
-          GestureDetector(
-            onTap: onCapture,
-            child: AnimatedBuilder(
-              animation: progress,
-              builder: (context, _) => SizedBox(
-                width: 78,
-                height: 78,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox.expand(
-                      child: CircularProgressIndicator(
-                        value: capturing ? progress.value : 1,
-                        strokeWidth: 4,
-                        strokeCap: StrokeCap.round,
-                        backgroundColor: Colors.white.withValues(alpha: 0.20),
-                        valueColor: AlwaysStoppedAnimation(
-                          capturing ? AppColors.primary : Colors.white,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        color: capturing ? AppColors.primary : Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: capturing
-                          ? const Icon(LucideIcons.loader,
-                              color: Colors.white, size: 22)
-                          : null,
-                    ),
-                  ],
-                ),
+          ScannerCircleButton(icon: LucideIcons.folder, onPressed: () {}),
+          const SizedBox(width: 12),
+          ScannerCircleButton(icon: LucideIcons.image, onPressed: () {}),
+          Expanded(
+            child: Center(
+              child: ShutterButton(
+                progress: progress,
+                capturing: capturing,
+                onPressed: onCapture,
               ),
             ),
           ),
-          _GhostButton(icon: LucideIcons.refreshCw, onPressed: () {}),
-        ],
-      ),
-    );
-  }
-}
-class _GhostButton extends StatelessWidget {
-  const _GhostButton({required this.icon, required this.onPressed});
-
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: Colors.white, size: 20),
-      ),
-    );
-  }
-}
-
-/// After a capture: the scan is saved as a PDF, and the primary action sends it
-/// straight into the conversion tools — scanning feeds the converter.
-class _ResultSheet extends StatelessWidget {
-  const _ResultSheet({required this.format});
-
-  final String format;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: 72,
-            height: 72,
-            decoration: const BoxDecoration(
-              color: AppColors.greenTint,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(LucideIcons.check,
-                size: 34, color: AppColors.green),
-          ),
-          const SizedBox(height: 18),
-          Text('Scan saved', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 6),
-          Text(
-            '$format scan saved to your library as a PDF.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Convert this file'),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep as PDF'),
+          SizedBox(
+            width: 60,
+            child: mode.isCode
+                ? null
+                : CaptureThumbnail(onPressed: () {}),
           ),
         ],
       ),

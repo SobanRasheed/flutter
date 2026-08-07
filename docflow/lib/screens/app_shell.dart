@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../core/tokens.dart';
+import '../models/conversion_tool.dart';
 import 'account_screen.dart';
 import 'convert_screen.dart';
 import 'files_screen.dart';
@@ -36,7 +37,7 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(
         index: _index,
         children: [
-          HomeDashboard(onSeeAllFiles: () => setState(() => _index = 1)),
+          const HomeDashboard(),
           const FilesScreen(),
           const ConvertScreen(),
           const AccountScreen(),
@@ -64,22 +65,21 @@ class _ActionCluster extends StatelessWidget {
       children: [
         _CircleAction(
           icon: LucideIcons.camera,
-          background: AppColors.primary.withValues(alpha: 0.12),
-          foreground: AppColors.primary,
           tooltip: 'Scan a document',
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ScannerScreen()),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         _CircleAction(
-          icon: LucideIcons.combine,
-          background: AppColors.primary,
-          foreground: Colors.white,
-          tooltip: 'Convert a file',
-          elevated: true,
+          icon: LucideIcons.image,
+          tooltip: 'Import from gallery',
           onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ConvertScreen()),
+            MaterialPageRoute(
+              builder: (_) => ConvertScreen(
+                initialTool: ConversionTool.byId('image-pdf'),
+              ),
+            ),
           ),
         ),
       ],
@@ -90,47 +90,41 @@ class _ActionCluster extends StatelessWidget {
 class _CircleAction extends StatelessWidget {
   const _CircleAction({
     required this.icon,
-    required this.background,
-    required this.foreground,
     required this.tooltip,
     required this.onTap,
-    this.elevated = false,
   });
 
   final IconData icon;
-  final Color background;
-  final Color foreground;
   final String tooltip;
   final VoidCallback onTap;
-  final bool elevated;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: Material(
-        color: background,
-        shape: const CircleBorder(),
-        elevation: 0,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: elevated
-                  ? [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.32),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : null,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.28),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
-            child: Icon(icon, color: foreground, size: 24),
+          ],
+        ),
+        child: Material(
+          color: AppColors.primary,
+          shape: const CircleBorder(),
+          elevation: 0,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: 60,
+              height: 60,
+              child: Icon(icon, color: Colors.white, size: 26),
+            ),
           ),
         ),
       ),

@@ -35,6 +35,9 @@ class AppColors {
   static const Color darkSurface = Color(0xFF1F222A);
   static const Color darkDivider = Color(0xFF35383F);
 
+  /// Ghost circles and chips that sit on top of the dark camera chrome.
+  static const Color darkElevated = Color(0xFF262A35);
+
   // Accents used by the tool grid and file-type badges
   static const Color amber = Color(0xFFFCA82F);
   static const Color coral = Color(0xFFFA5B5D);
