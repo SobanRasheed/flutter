@@ -84,6 +84,54 @@ class FileRow extends StatelessWidget {
   }
 }
 
+/// A read-only file summary — thumbnail, name, timestamp — with no actions.
+/// Used where a screen needs to confirm *which* file it is acting on: the
+/// delete sheet and the single-file PDF tools.
+class FileCard extends StatelessWidget {
+  const FileCard({super.key, required this.file});
+
+  final DocumentFile file;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(AppRadius.tile),
+      ),
+      child: Row(
+        children: [
+          _Thumbnail(file: file),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  file.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontSize: 18, height: 1.4),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${file.date}   ${file.time}',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: AppColors.textMeta),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// The page preview: an 88pt square holding the render exported from the kit,
 /// cropped to the top of the page. Files with no render fall back to a drawn
 /// sheet with ruled lines and a format badge.

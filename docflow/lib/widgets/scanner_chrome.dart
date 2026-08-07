@@ -152,7 +152,7 @@ class PagePreview extends StatelessWidget {
         asset,
         fit: BoxFit.contain,
         alignment: Alignment.topCenter,
-        errorBuilder: (context, _, __) => const SizedBox.shrink(),
+        errorBuilder: (context, _, _) => const SizedBox.shrink(),
       ),
     );
 

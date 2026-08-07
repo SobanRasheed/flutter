@@ -6,8 +6,10 @@ import '../data/sample_data.dart';
 import '../models/conversion_tool.dart';
 import '../widgets/docflow_logo.dart';
 import '../widgets/file_row.dart';
+import '../widgets/share_sheet.dart';
 import '../widgets/tool_tile.dart';
 import 'convert_screen.dart';
+import 'document_viewer_screen.dart';
 import 'recent_files_screen.dart';
 
 /// Home. Follows the ProScan home screen: wordmark header with a search
@@ -97,8 +99,12 @@ class HomeDashboard extends StatelessWidget {
                 for (final file in recent)
                   FileRow(
                     file: file,
-                    onTap: () {},
-                    onShare: () {},
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => DocumentViewerScreen.file(file: file),
+                      ),
+                    ),
+                    onShare: () => showShareSheet(context, title: file.name),
                     onMore: () {},
                   ),
               ],

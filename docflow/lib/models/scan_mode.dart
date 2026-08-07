@@ -12,20 +12,20 @@ enum ScanMode {
   businessCard('Business Card', _Overlay.crop),
   whiteboard('Whiteboard', _Overlay.crop);
 
-  const ScanMode(this.label, this.overlay);
+  const ScanMode(this.label, this._overlay);
 
   final String label;
-  final _Overlay overlay;
+  final _Overlay _overlay;
 
   /// Codes get their own stripped-back chrome: a title and instruction in place
   /// of the edit icons, and no captured-page thumbnail.
   bool get isCode => this == ScanMode.qrCode || this == ScanMode.barcode;
 
   /// Books are shot two pages at a time, so the guide splits down the middle.
-  bool get isSplit => overlay == _Overlay.split;
+  bool get isSplit => _overlay == _Overlay.split;
 
-  bool get hasFinder => overlay == _Overlay.finder;
-  bool get hasCropHandles => overlay == _Overlay.crop;
+  bool get hasFinder => _overlay == _Overlay.finder;
+  bool get hasCropHandles => _overlay == _Overlay.crop;
 
   /// Caption floated over the frame while composing the shot.
   String? get hint => switch (this) {

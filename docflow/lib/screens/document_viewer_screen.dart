@@ -16,12 +16,13 @@ class DocumentViewerScreen extends StatefulWidget {
     this.pages = 1,
   });
 
-  /// Convenience for opening straight from a library row.
+  /// Convenience for opening straight from a library row. Files with no page
+  /// render fall back to a blank sheet.
   DocumentViewerScreen.file({Key? key, required DocumentFile file})
       : this(
           key: key,
           title: file.name,
-          thumbnail: file.thumbnail,
+          thumbnail: file.thumbnail ?? '',
           pages: file.pages,
         );
 

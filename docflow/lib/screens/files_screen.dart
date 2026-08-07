@@ -4,6 +4,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../core/tokens.dart';
 import '../data/sample_data.dart';
 import '../widgets/file_row.dart';
+import '../widgets/share_sheet.dart';
+import 'document_viewer_screen.dart';
 
 /// The Files tab — ProScan's file manager: a segmented Files/Folders control
 /// over the list, with search and sort in the header.
@@ -73,8 +75,14 @@ class _FilesScreenState extends State<FilesScreen> {
                       for (final file in SampleData.recentFiles)
                         FileRow(
                           file: file,
-                          onTap: () {},
-                          onShare: () {},
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  DocumentViewerScreen.file(file: file),
+                            ),
+                          ),
+                          onShare: () =>
+                              showShareSheet(context, title: file.name),
                           onMore: () {},
                         ),
                     ],
