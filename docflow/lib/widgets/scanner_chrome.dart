@@ -134,6 +134,38 @@ class CaptureThumbnail extends StatelessWidget {
   }
 }
 
+/// A page rendered on white, sized to the paper it is bound for. Used by the
+/// editor, the resize sheet and the viewer.
+class PagePreview extends StatelessWidget {
+  const PagePreview({super.key, required this.asset, this.aspectRatio});
+
+  final String asset;
+
+  /// Null keeps the render's own proportions (Auto Fit).
+  final double? aspectRatio;
+
+  @override
+  Widget build(BuildContext context) {
+    final page = ColoredBox(
+      color: Colors.white,
+      child: Image.asset(
+        asset,
+        fit: BoxFit.contain,
+        alignment: Alignment.topCenter,
+        errorBuilder: (context, _, __) => const SizedBox.shrink(),
+      ),
+    );
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      child: aspectRatio == null
+          ? page
+          : AspectRatio(aspectRatio: aspectRatio!, child: page),
+    );
+  }
+}
+
 /// Rounded dark pill used for the mode hint and the "Page 1 of 1" counter.
 class DarkPill extends StatelessWidget {
   const DarkPill({super.key, required this.label});
