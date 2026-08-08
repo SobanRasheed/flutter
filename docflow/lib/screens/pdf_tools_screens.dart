@@ -3,8 +3,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../core/tokens.dart';
 import '../data/sample_data.dart';
-import '../models/conversion_tool.dart';
 import '../models/document.dart';
+import '../widgets/file_row.dart';
 
 /// The three "Organise / Optimise" tools from the marketing site — Merge,
 /// Protect and Compress — each a small workflow of its own on the light ground.
@@ -198,7 +198,9 @@ class _MergeRow extends StatelessWidget {
 
 /// Protect PDF: set a password (twice) before locking the file.
 class ProtectPdfScreen extends StatefulWidget {
-  const ProtectPdfScreen({super.key});
+  const ProtectPdfScreen({super.key, required this.file});
+
+  final DocumentFile file;
 
   @override
   State<ProtectPdfScreen> createState() => _ProtectPdfScreenState();
@@ -238,7 +240,6 @@ class _ProtectPdfScreenState extends State<ProtectPdfScreen> {
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(LucideIcons.arrowLeft),
         ),
-        title: Text('Protect PDF', style: theme.textTheme.titleLarge),
       ),
       body: SafeArea(
         top: false,
@@ -246,12 +247,20 @@ class _ProtectPdfScreenState extends State<ProtectPdfScreen> {
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
                 children: [
+                  Text('Protect PDF', style: theme.textTheme.displayMedium),
+                  const SizedBox(height: 16),
                   Text(
-                    'Set a password to open this PDF.',
-                    style: theme.textTheme.bodyMedium,
+                    'Set a password to protect your scan. This password will '
+                    'be required if you or the person you provide the scanned '
+                    'document wants to access the file. If you forget the '
+                    'password, then this file will not be accessible forever.',
+                    style: theme.textTheme.bodyLarge
+                        ?.copyWith(color: AppColors.textSecondary),
                   ),
+                  const SizedBox(height: 24),
+                  const Divider(),
                   const SizedBox(height: 24),
                   Text('Password', style: theme.textTheme.labelLarge),
                   const SizedBox(height: 8),
@@ -302,9 +311,11 @@ class _ProtectPdfScreenState extends State<ProtectPdfScreen> {
   }
 }
 
-/// Compress PDF: three quality tiers as radio cards.
+/// Compress PDF: the file being shrunk, then three quality tiers as radios.
 class CompressPdfScreen extends StatefulWidget {
-  const CompressPdfScreen({super.key});
+  const CompressPdfScreen({super.key, required this.file});
+
+  final DocumentFile file;
 
   @override
   State<CompressPdfScreen> createState() => _CompressPdfScreenState();

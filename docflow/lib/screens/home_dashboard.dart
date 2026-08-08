@@ -10,6 +10,7 @@ import '../widgets/share_sheet.dart';
 import '../widgets/tool_tile.dart';
 import 'convert_screen.dart';
 import 'document_viewer_screen.dart';
+import 'file_action_menu.dart';
 import 'recent_files_screen.dart';
 
 /// Home. Follows the ProScan home screen: wordmark header with a search
@@ -105,7 +106,7 @@ class HomeDashboard extends StatelessWidget {
                       ),
                     ),
                     onShare: () => showShareSheet(context, title: file.name),
-                    onMore: () {},
+                    onMore: () => showFileActionMenu(context, file: file),
                   ),
               ],
             ),

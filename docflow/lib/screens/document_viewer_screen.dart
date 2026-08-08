@@ -5,6 +5,7 @@ import '../core/tokens.dart';
 import '../models/document.dart';
 import '../widgets/scanner_chrome.dart';
 import '../widgets/share_sheet.dart';
+import 'file_action_menu.dart';
 
 /// A saved document, full bleed on the dark ground. Rename from the pencil,
 /// everything else from the overflow menu.
@@ -14,6 +15,7 @@ class DocumentViewerScreen extends StatefulWidget {
     required this.title,
     required this.thumbnail,
     this.pages = 1,
+    this.file,
   });
 
   /// Convenience for opening straight from a library row. Files with no page
@@ -24,11 +26,16 @@ class DocumentViewerScreen extends StatefulWidget {
           title: file.name,
           thumbnail: file.thumbnail ?? '',
           pages: file.pages,
+          file: file,
         );
 
   final String title;
   final String thumbnail;
   final int pages;
+
+  /// The library entry this view came from, when there is one. Fresh scans
+  /// have no record yet, so their overflow menu falls back to sharing.
+  final DocumentFile? file;
 
   @override
   State<DocumentViewerScreen> createState() => _DocumentViewerScreenState();
@@ -37,6 +44,12 @@ class DocumentViewerScreen extends StatefulWidget {
 class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   late String _title = widget.title;
   int _page = 1;
+
+  Future<void> _openMenu() {
+    final file = widget.file;
+    if (file == null) return showShareSheet(context, title: _title);
+    return showFileActionMenu(context, file: file);
+  }
 
   Future<void> _rename() async {
     final controller = TextEditingController(text: _title);
@@ -104,7 +117,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                         color: Colors.white, size: 24),
                   ),
                   IconButton(
-                    onPressed: () => showShareSheet(context, title: _title),
+                    onPressed: _openMenu,
                     icon: const Icon(LucideIcons.moreHorizontal,
                         color: Colors.white, size: 26),
                   ),

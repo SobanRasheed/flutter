@@ -6,6 +6,7 @@ import '../data/sample_data.dart';
 import '../widgets/file_row.dart';
 import '../widgets/share_sheet.dart';
 import 'document_viewer_screen.dart';
+import 'file_action_menu.dart';
 
 /// Recent Files — the kit's full-height list behind Home's "See all". Back
 /// arrow, title and search sit in the header; below it every recent document
@@ -60,7 +61,7 @@ class RecentFilesScreen extends StatelessWidget {
                       ),
                       onShare: () =>
                           showShareSheet(context, title: file.name),
-                      onMore: () {},
+                      onMore: () => showFileActionMenu(context, file: file),
                     ),
                 ],
               ),

@@ -6,6 +6,7 @@ import '../data/sample_data.dart';
 import '../widgets/file_row.dart';
 import '../widgets/share_sheet.dart';
 import 'document_viewer_screen.dart';
+import 'file_action_menu.dart';
 
 /// The Files tab — ProScan's file manager: a segmented Files/Folders control
 /// over the list, with search and sort in the header.
@@ -83,7 +84,8 @@ class _FilesScreenState extends State<FilesScreen> {
                           ),
                           onShare: () =>
                               showShareSheet(context, title: file.name),
-                          onMore: () {},
+                          onMore: () =>
+                              showFileActionMenu(context, file: file),
                         ),
                     ],
                   )

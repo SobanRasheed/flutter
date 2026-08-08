@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../core/tokens.dart';
+import '../widgets/docflow_logo.dart';
+import '../widgets/settings_row.dart';
+import 'about_screen.dart';
+import 'help_center_screen.dart';
+import 'language_screen.dart';
 import 'login_screen.dart';
+import 'personal_info_screen.dart';
+import 'preferences_screen.dart';
+import 'security_screen.dart';
 
-/// Account tab, following ProScan's settings layout: profile card, storage
-/// meter, then grouped rows. ProScan's premium upsell is replaced with a
-/// privacy card — DocFlow is free and processes files on device.
+/// Account tab: wordmark header, profile card with a storage meter, then the
+/// settings rows. The kit puts a premium upsell under the profile; DocFlow is
+/// free and works on device, so that slot carries the privacy card instead.
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
@@ -16,8 +24,22 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   bool _darkMode = false;
+  String _language = 'English (US)';
 
-  void _logout() {
+  void _open(Widget screen) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
+  Future<void> _openLanguage() async {
+    final picked = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => LanguageScreen(selected: _language)),
+    );
+    if (picked != null) setState(() => _language = picked);
+  }
+
+  Future<void> _confirmLogout() async {
+    final confirmed = await showLogoutSheet(context);
+    if (!confirmed || !mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
@@ -31,12 +53,19 @@ class _AccountScreenState extends State<AccountScreen> {
     return SafeArea(
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
         children: [
           Row(
             children: [
-              Text('Account', style: theme.textTheme.displayMedium),
-              const Spacer(),
+              const DocFlowLogo(size: 30),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Account',
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.displayMedium,
+                ),
+              ),
               IconButton(
                 onPressed: () {},
                 icon: const Icon(LucideIcons.moreHorizontal,
@@ -44,35 +73,36 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           const _ProfileCard(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           const _PrivacyCard(),
-          const SizedBox(height: 24),
-          _Row(
+          const SizedBox(height: 20),
+          SettingsRow(
             icon: LucideIcons.user,
             label: 'Personal Info',
-            onTap: () {},
+            onTap: () => _open(const PersonalInfoScreen()),
           ),
-          _Row(
+          SettingsRow(
             icon: LucideIcons.settings,
             label: 'Preferences',
-            onTap: () {},
+            onTap: () => _open(const PreferencesScreen()),
           ),
-          _Row(
-            icon: LucideIcons.shield,
+          SettingsRow(
+            icon: LucideIcons.shieldCheck,
             label: 'Security',
-            onTap: () {},
+            onTap: () => _open(const SecurityScreen()),
           ),
-          _Row(
-            icon: LucideIcons.globe,
+          SettingsRow(
+            icon: LucideIcons.languages,
             label: 'Language',
-            trailing: Text('English (US)', style: theme.textTheme.bodyMedium),
-            onTap: () {},
+            value: _language,
+            onTap: _openLanguage,
           ),
-          _Row(
+          SettingsRow(
             icon: LucideIcons.eye,
             label: 'Dark Mode',
+            showChevron: false,
             trailing: Switch(
               value: _darkMode,
               onChanged: (v) {
@@ -82,32 +112,103 @@ class _AccountScreenState extends State<AccountScreen> {
                 );
               },
             ),
-            showChevron: false,
           ),
-          const SizedBox(height: 8),
-          const Divider(),
-          const SizedBox(height: 8),
-          _Row(
-            icon: LucideIcons.helpCircle,
+          const SettingsDivider(),
+          SettingsRow(
+            icon: LucideIcons.fileText,
             label: 'Help Center',
-            onTap: () {},
+            onTap: () => _open(const HelpCenterScreen()),
           ),
-          _Row(
+          SettingsRow(
             icon: LucideIcons.info,
             label: 'About DocFlow',
-            onTap: () {},
+            onTap: () => _open(const AboutScreen()),
           ),
-          _Row(
+          SettingsRow(
             icon: LucideIcons.logOut,
             label: 'Logout',
             danger: true,
             showChevron: false,
-            onTap: _logout,
+            onTap: _confirmLogout,
           ),
         ],
       ),
     );
   }
+}
+
+/// Confirms sign-out. Coral title, then Cancel beside a primary confirm.
+Future<bool> showLogoutSheet(BuildContext context) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 10),
+          Container(
+            width: 44,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'Logout',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: AppColors.coral, fontSize: 24),
+          ),
+          const SizedBox(height: 22),
+          const Divider(height: 1),
+          const SizedBox(height: 28),
+          Text(
+            'Are you sure you want to log out?',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 28),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 60,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primaryTint,
+                        foregroundColor: AppColors.primary,
+                        shape: const StadiumBorder(),
+                        textStyle: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Yes, Logout'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  ).then((value) => value ?? false);
 }
 
 class _ProfileCard extends StatelessWidget {
@@ -128,52 +229,62 @@ class _ProfileCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 78,
+            height: 78,
             decoration: const BoxDecoration(
               color: AppColors.primaryTint,
               shape: BoxShape.circle,
             ),
             child: const Icon(LucideIcons.user,
-                size: 28, color: AppColors.primary),
+                size: 34, color: AppColors.primary),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text('Andrew Ainsley',
-                        style: theme.textTheme.titleMedium),
-                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Andrew Ainsley',
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                          horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        borderRadius: BorderRadius.circular(AppRadius.field),
                         border: Border.all(color: AppColors.primary),
                       ),
                       child: const Text(
                         'Free',
                         style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.primary,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text('${used.toInt()} MB / ${total.toInt()} MB',
-                    style: theme.textTheme.bodySmall),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+                Text(
+                  '${used.toInt()} MB  /  ${total.toInt()} MB',
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontSize: 15, color: AppColors.textMeta),
+                ),
+                const SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   child: LinearProgressIndicator(
                     value: used / total,
-                    minHeight: 6,
+                    minHeight: 8,
                     backgroundColor: AppColors.divider,
                     valueColor:
                         const AlwaysStoppedAnimation(AppColors.primary),
@@ -206,16 +317,16 @@ class _PrivacyCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.18),
               shape: BoxShape.circle,
             ),
             child: const Icon(LucideIcons.shieldCheck,
-                color: Colors.white, size: 22),
+                color: Colors.white, size: 26),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,69 +335,22 @@ class _PrivacyCard extends StatelessWidget {
                   '100% Private',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 4),
+                SizedBox(height: 5),
                 Text(
                   'Files never leave your device. Nothing is uploaded.',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 13,
                     height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Row extends StatelessWidget {
-  const _Row({
-    required this.icon,
-    required this.label,
-    this.trailing,
-    this.onTap,
-    this.danger = false,
-    this.showChevron = true,
-  });
-
-  final IconData icon;
-  final String label;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-  final bool danger;
-  final bool showChevron;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = danger ? AppColors.coral : AppColors.textPrimary;
-
-    return ListTile(
-      onTap: onTap,
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, size: 22, color: color),
-      title: Text(
-        label,
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(color: color, fontWeight: FontWeight.w600),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ?trailing,
-          if (showChevron) ...[
-            const SizedBox(width: 8),
-            const Icon(LucideIcons.chevronRight,
-                size: 18, color: AppColors.textSecondary),
-          ],
         ],
       ),
     );

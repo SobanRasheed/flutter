@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../core/tokens.dart';
 import '../models/conversion_tool.dart';
 import 'conversion_flow.dart';
+import 'pdf_tools_screens.dart';
 
 /// The Convert tab: every DocFlow tool in one list, grouped the way the
 /// marketing site groups them. Styled as ProScan's "Export to..." screen —
@@ -30,8 +31,16 @@ class _ConvertScreenState extends State<ConvertScreen> {
   void _start() {
     final tool = _selected;
     if (tool == null) return;
+
+    // Merge takes a multi-file list rather than one input, so it has its own
+    // screen. Everything else runs through the pick → convert → done flow.
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ConversionFlow(tool: tool)),
+      MaterialPageRoute(
+        builder: (_) => switch (tool.id) {
+          'merge-pdf' => const MergePdfScreen(),
+          _ => ConversionFlow(tool: tool),
+        },
+      ),
     );
   }
 
