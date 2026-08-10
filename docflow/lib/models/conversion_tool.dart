@@ -54,6 +54,11 @@ class ConversionTool {
       color: AppColors.violet,
       tint: AppColors.violetTint,
     ),
+    // NOTE: the engine backing this tile extracts *table structures* to CSV and
+    // returns 422 for a PDF with no detectable table — it is not a general
+    // "PDF to spreadsheet" converter, and there is no true .xlsx output.
+    // Verified against Stirling 2.14.3. Shipping this properly needs a
+    // different engine; until then the flow surfaces the 422 honestly.
     ConversionTool(
       id: 'pdf-to-excel',
       title: 'PDF to Excel',
@@ -127,5 +132,28 @@ class ConversionTool {
         'XLSX' => format == DocFormat.xlsx,
         'JPG/PNG' => format == DocFormat.jpg || format == DocFormat.png,
         _ => false,
+      };
+
+  /// File extensions the picker should offer for this tool's input.
+  List<String> get inputExtensions => switch (from) {
+        'PDF' || 'PDF+PDF' => const ['pdf'],
+        'DOCX' => const ['doc', 'docx', 'odt', 'rtf', 'txt'],
+        'XLSX' => const ['xls', 'xlsx', 'ods', 'csv'],
+        'JPG/PNG' => const ['jpg', 'jpeg', 'png', 'webp', 'heic'],
+        _ => const [],
+      };
+
+  /// Whether the tool takes several files at once.
+  bool get isMultiFile => id == 'merge-pdf' || id == 'image-pdf';
+
+  /// The id the Node backend knows this tool by.
+  ///
+  /// These deliberately differ for [twoWay] tools: Stirling has separate
+  /// endpoints per direction, so one client-side tile maps to one of two
+  /// server ids depending on what the user picked. [reverse] selects the
+  /// PDF-to-image direction.
+  String backendId({bool reverse = false}) => switch (id) {
+        'image-pdf' => reverse ? 'pdf-to-image' : 'image-to-pdf',
+        _ => id,
       };
 }

@@ -13,8 +13,8 @@ import 'preferences_screen.dart';
 import 'security_screen.dart';
 
 /// Account tab: wordmark header, profile card with a storage meter, then the
-/// settings rows. The kit puts a premium upsell under the profile; DocFlow is
-/// free and works on device, so that slot carries the privacy card instead.
+/// settings rows. The kit puts a premium upsell under the profile; that slot
+/// carries the privacy card until the Pro subscription flow lands.
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
@@ -332,7 +332,7 @@ class _PrivacyCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '100% Private',
+                  'Private by design',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -341,7 +341,7 @@ class _PrivacyCard extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 Text(
-                  'Files never leave your device. Nothing is uploaded.',
+                  'Files are processed in memory and never stored on our servers.',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 13,

@@ -9,6 +9,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  /// google_sign_in 6.x is instance-based — `GoogleSignIn.instance` and
+  /// `authenticate()` belong to the 7.x API and do not exist here.
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
   /// Stream of auth state changes — use with StreamBuilder for reactive UI.
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
@@ -41,12 +45,13 @@ class AuthService {
         return await _auth.signInWithPopup(provider);
       } else {
         // Mobile: use google_sign_in plugin
-        final googleUser = await GoogleSignIn.instance.authenticate();
+        final googleUser = await _googleSignIn.signIn();
         if (googleUser == null) return null; // User cancelled
 
         final googleAuth = await googleUser.authentication;
         final credential = GoogleAuthProvider.credential(
           idToken: googleAuth.idToken,
+          accessToken: googleAuth.accessToken,
         );
 
         return await _auth.signInWithCredential(credential);
@@ -64,7 +69,7 @@ class AuthService {
   Future<void> signOut() async {
     try {
       if (!kIsWeb) {
-        await GoogleSignIn.instance.signOut();
+        await _googleSignIn.signOut();
       }
       await _auth.signOut();
     } catch (e) {

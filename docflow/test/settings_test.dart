@@ -31,8 +31,16 @@ void main() {
       expect(find.text('Andrew Ainsley'), findsOneWidget);
       expect(find.text('Free'), findsOneWidget);
       expect(find.text('465 MB  /  1024 MB'), findsOneWidget);
-      // DocFlow keeps the privacy card where the kit sells premium.
-      expect(find.text('100% Private'), findsOneWidget);
+      // DocFlow keeps the privacy card where the kit sells premium. The claim
+      // must stay accurate: files ARE uploaded, they are just never persisted
+      // server-side, so this must not drift back to "never leave your device".
+      expect(find.text('Private by design'), findsOneWidget);
+      expect(
+        find.text(
+          'Files are processed in memory and never stored on our servers.',
+        ),
+        findsOneWidget,
+      );
 
       for (final row in [
         'Personal Info',

@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+
+# Never commit a service account. Pass it as FIREBASE_SERVICE_ACCOUNT_B64.
+*-firebase-adminsdk-*.json
+service-account*.json
+
+npm-debug.log*
+.DS_Store

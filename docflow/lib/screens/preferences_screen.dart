@@ -5,9 +5,9 @@ import '../core/tokens.dart';
 import '../widgets/settings_row.dart';
 
 /// App defaults, grouped. The kit's groups are Scan / File Naming / Files &
-/// Storage / Payments & Subscriptions / Cloud & Sync. DocFlow is free and works
-/// on device, so the payments group becomes Conversion — the app's main job —
-/// and Cloud & Sync becomes Notifications.
+/// Storage / Payments & Subscriptions / Cloud & Sync. DocFlow renames the
+/// payments group to Conversion — the app's main job — and Cloud & Sync to
+/// Notifications, since converted files are stored locally rather than synced.
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
 

@@ -80,8 +80,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     art: 'assets/onboarding/ob_art_3.png',
                     title: 'Organize your documents\nwith DocFlow now!',
                     body:
-                        'Every file stays on your device. Nothing is uploaded, '
-                        'nothing leaves your phone.',
+                        'Converted files are saved to your phone and stay '
+                        'there. We never store them on our servers.',
                   ),
                 ],
               ),
