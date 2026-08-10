@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: Firebase Auth UID
+// Fields:
+//   - conversionsUsed: number (required) - conversion count in current period
+//   - isPro: bool (required) - pro subscription status
+//   - lastResetDate: timestamp (required) - last quota reset date
+//
+// All writes are performed exclusively by the Node.js Admin SDK,
+// which bypasses these security rules entirely. The Flutter client
+// may only READ its own quota document.
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ───────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ─── Users Collection ───────────────────────────────────
+    //
+    // READ:  Only the document owner can read their own quota.
+    // WRITE: Denied for ALL clients. Only the Admin SDK (which
+    //        bypasses rules) may create/update/delete user docs.
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // ─── Catch-all: Deny everything else ────────────────────
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
