@@ -7,7 +7,8 @@ import '../widgets/settings_row.dart';
 import 'about_screen.dart';
 import 'help_center_screen.dart';
 import 'language_screen.dart';
-import 'login_screen.dart';
+import '../services/auth_service.dart';
+import 'welcome_screen.dart';
 import 'personal_info_screen.dart';
 import 'preferences_screen.dart';
 import 'security_screen.dart';
@@ -40,8 +41,10 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> _confirmLogout() async {
     final confirmed = await showLogoutSheet(context);
     if (!confirmed || !mounted) return;
+    await AuthService().signOut();
+    if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
       (route) => false,
     );
   }
