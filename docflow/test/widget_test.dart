@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:docflow/main.dart';
+import 'package:docflow/services/file_store.dart';
 
 /// Boots the app at the design's 430x932 frame and pumps through the splash.
 /// The default 800x600 test surface is too short for the pinned CTAs, so every
@@ -30,6 +34,35 @@ Future<void> _bootToSignIn(WidgetTester tester) async {
 }
 
 void main() {
+  // Reaching Home boots the file library, which opens SQLite. The test VM has
+  // no platform sqflite, so point it at the ffi implementation and give the
+  // store a temp directory to work in.
+  late Directory sandbox;
+
+  setUpAll(() {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  });
+
+  setUp(() async {
+    sandbox = await Directory.systemTemp.createTemp('docflow-widget-');
+    FileStore.debugOverrideDirectories(
+      documents: sandbox,
+      databasePath: sandbox.path,
+    );
+  });
+
+  tearDown(() async {
+    // Close the database before removing the directory: on Windows SQLite
+    // keeps the file handle open and the delete fails with errno 32.
+    await FileStore.instance.debugReset();
+    try {
+      if (await sandbox.exists()) await sandbox.delete(recursive: true);
+    } on FileSystemException {
+      // A leftover temp dir is harmless; the OS clears it.
+    }
+  });
+
   testWidgets('boots to the splash, then hands off to onboarding',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(430, 932);
@@ -109,16 +142,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text("You've got mail 📩"), findsOneWidget);
 
-    // Confirm stays disabled until all four digits land.
+    // The OTP screen runs a 1-second resend countdown, so pumpAndSettle would
+    // never reach quiescence here. Pump fixed frames instead.
     final confirm = find.widgetWithText(ElevatedButton, 'Confirm');
     expect(tester.widget<ElevatedButton>(confirm).onPressed, isNull);
 
     await tester.enterText(find.byType(TextField).first, '4679');
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(tester.widget<ElevatedButton>(confirm).onPressed, isNotNull);
 
     await tester.tap(confirm);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Create new password 🔒'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(ElevatedButton, 'Continue'));
@@ -139,9 +174,11 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, '4679');
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Confirm'));
-    await tester.pumpAndSettle();
+    // Bounded pumps — the OTP countdown timer blocks pumpAndSettle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     // Second field is Confirm Password; break the match.
     await tester.enterText(find.byType(TextField).at(1), 'different');

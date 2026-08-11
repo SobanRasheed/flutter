@@ -1,8 +1,10 @@
 import 'package:animations/animations.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../core/tokens.dart';
 import '../widgets/docflow_logo.dart';
+import 'app_shell.dart';
 import 'onboarding_screen.dart';
 
 /// Splash. ProScan's launch screen: white ground, centred mark over the
@@ -40,22 +42,22 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // Navigate to onboarding after splash
+    // Navigate after splash — skip onboarding if already signed in
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 800),
-            pageBuilder: (context, animation, secondaryAnimation) {
-              return FadeThroughTransition(
-                animation: animation,
-                secondaryAnimation: secondaryAnimation,
-                child: const OnboardingScreen(),
-              );
-            },
-          ),
-        );
-      }
+      if (!mounted) return;
+      final isSignedIn = FirebaseAuth.instance.currentUser != null;
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 800),
+          pageBuilder: (context, animation, secondaryAnimation) {
+            return FadeThroughTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              child: isSignedIn ? const AppShell() : const OnboardingScreen(),
+            );
+          },
+        ),
+      );
     });
   }
 

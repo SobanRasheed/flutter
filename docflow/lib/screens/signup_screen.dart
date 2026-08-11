@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../core/tokens.dart';
+import '../services/auth_service.dart';
 import 'app_shell.dart';
 
 /// Sign up. ProScan's two-step registration: create the account, then complete
@@ -21,11 +22,14 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmController = TextEditingController();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _authService = AuthService();
 
   int _step = 0;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _remember = true;
+  bool _loading = false;
+  String? _error;
   String _gender = 'Male';
   DateTime? _birthday;
 
@@ -47,22 +51,59 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  void _next() => setState(() => _step = 1);
+  void _next() {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirm = _confirmController.text;
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _error = 'Please enter your email and password.');
+      return;
+    }
+    if (password != confirm) {
+      setState(() => _error = 'Passwords do not match.');
+      return;
+    }
+    if (password.length < 6) {
+      setState(() => _error = 'Password must be at least 6 characters.');
+      return;
+    }
+    setState(() { _error = null; _step = 1; });
+  }
 
-  void _finish() {
-    Navigator.of(context).pushAndRemoveUntil(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 600),
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return FadeThroughTransition(
-            animation: animation,
-            secondaryAnimation: secondaryAnimation,
-            child: const AppShell(),
-          );
-        },
-      ),
-      (route) => false,
-    );
+  Future<void> _finish() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      await _authService.createUserWithEmail(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 600),
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return FadeThroughTransition(
+                animation: animation,
+                secondaryAnimation: secondaryAnimation,
+                child: const AppShell(),
+              );
+            },
+          ),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      setState(() => _error = _friendlyError(e.toString()));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _friendlyError(String raw) {
+    if (raw.contains('email-already-in-use')) return 'An account with this email already exists.';
+    if (raw.contains('invalid-email')) return 'Please enter a valid email address.';
+    if (raw.contains('weak-password')) return 'Password is too weak. Use at least 6 characters.';
+    return 'Sign up failed. Please try again.';
   }
 
   Future<void> _pickBirthday() async {

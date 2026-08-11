@@ -163,8 +163,13 @@ class _FilesScreenState extends State<FilesScreen> {
   }
 
   Widget _buildBody(List<StoredFile> visible) {
+    // No spinner. The shell builds every tab up front via IndexedStack, so a
+    // CircularProgressIndicator here animates forever on a tab nobody is
+    // looking at — and never lets a widget test reach quiescence. The local
+    // read finishes in a frame or two, so an empty gap is both honest and
+    // invisible.
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SizedBox.shrink();
     }
     if (visible.isEmpty) {
       return _EmptyState(searching: _query.isNotEmpty);

@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../core/tokens.dart';
+import '../services/auth_service.dart';
 import 'app_shell.dart';
 import 'forgot_password_screen.dart';
 
-/// Sign in — ProScan's "Hello there 👋" screen. Fields are underline-only with
-/// no prefix icons, Forgot Password sits centred below a rule, and the Sign In
-/// pill is pinned above the home indicator. The FadeThrough hand-off to the
-/// shell is unchanged.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,12 +15,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(
-    text: 'andrew.ainsley@yourdomain.com',
-  );
-  final _passwordController = TextEditingController(text: 'docflow1234');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _authService = AuthService();
   bool _obscurePassword = true;
   bool _remember = true;
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -32,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  void _goToShell() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 600),
@@ -45,6 +43,38 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _handleEmailLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _error = 'Please enter your email and password.');
+      return;
+    }
+
+    setState(() { _loading = true; _error = null; });
+    try {
+      await _authService.signInWithEmail(email, password);
+      if (mounted) _goToShell();
+    } catch (e) {
+      setState(() => _error = _friendlyError(e.toString()));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final credential = await _authService.signInWithGoogle();
+      if (credential != null && mounted) _goToShell();
+    } catch (e) {
+      setState(() => _error = _friendlyError(e.toString()));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _forgotPassword() {
@@ -61,6 +91,15 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       ),
     );
+  }
+
+  String _friendlyError(String raw) {
+    if (raw.contains('user-not-found') || raw.contains('wrong-password') || raw.contains('invalid-credential')) {
+      return 'Invalid email or password.';
+    }
+    if (raw.contains('too-many-requests')) return 'Too many attempts. Try again later.';
+    if (raw.contains('network')) return 'Network error. Check your connection.';
+    return 'Sign in failed. Please try again.';
   }
 
   @override
@@ -85,8 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 16),
-                    Text('Hello there 👋',
-                        style: theme.textTheme.displayMedium),
+                    Text('Hello there 👋', style: theme.textTheme.displayMedium),
                     const SizedBox(height: 12),
                     Text(
                       'Please enter your email & password to sign in.',
@@ -94,6 +132,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           ?.copyWith(color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 32),
+                    if (_error != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade200),
+                        ),
+                        child: Text(_error!,
+                            style: TextStyle(color: Colors.red.shade700, fontSize: 14)),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     Text('Email', style: theme.textTheme.labelLarge),
                     TextField(
                       controller: _emailController,
@@ -107,6 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
+                      onSubmitted: (_) => _handleEmailLogin(),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2,
@@ -163,7 +215,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const _SocialRow(),
+                    // Google Sign-In button
+                    OutlinedButton.icon(
+                      onPressed: _loading ? null : _handleGoogleLogin,
+                      icon: Image.asset(
+                        'assets/onboarding/mark_google.png',
+                        height: 22,
+                      ),
+                      label: const Text('Continue with Google'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.tile),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -173,49 +239,19 @@ class _LoginScreenState extends State<LoginScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
               child: ElevatedButton(
-                onPressed: _handleLogin,
-                child: const Text('Sign In'),
+                onPressed: _loading ? null : _handleEmailLogin,
+                child: _loading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text('Sign In'),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Google / Apple / Facebook, drawn from the kit's exported marks so the
-/// multicolour G and the Apple glyph render on every platform.
-class _SocialRow extends StatelessWidget {
-  const _SocialRow();
-
-  static const _marks = [
-    'assets/onboarding/mark_google.png',
-    'assets/onboarding/mark_apple.png',
-    'assets/onboarding/mark_facebook.png',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final (index, asset) in _marks.indexed) ...[
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 56),
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.tile),
-                ),
-              ),
-              child: Image.asset(asset, height: 26, fit: BoxFit.contain),
-            ),
-          ),
-          if (index < _marks.length - 1) const SizedBox(width: 16),
-        ],
-      ],
     );
   }
 }

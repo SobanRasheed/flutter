@@ -73,8 +73,8 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- Replace with your REVERSED_CLIENT_ID from GoogleService-Info.plist -->
-				<string>$(REVERSED_CLIENT_ID)</string>
+				<!-- Google Sign-In reversed client ID from GoogleService-Info.plist -->
+				<string>com.googleusercontent.apps.709844626901-ic3v99rcqa3t0q72nvsb988c80lbn7uf</string>
 			</array>
 		</dict>
 	</array>

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "709844626901",
+    "project_id": "docflow-5e0f8",
+    "storage_bucket": "docflow-5e0f8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:709844626901:android:c7b340f70bd2dea1d3e15c",
+        "android_client_info": {
+          "package_name": "com.example.docflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "709844626901-5r8rdnr6bq1sh8u966titaiah5b7k266.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.docflow",
+            "certificate_hash": "0e63d3c0e134409138b55e71c04359034584a22c"
+          }
+        },
+        {
+          "client_id": "709844626901-dvfkresqoc0p7d3q3rsn5mivugi3lgm2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUf5jPx4C8cnmclbj9-r4QSCYmuOytTBE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "709844626901-dvfkresqoc0p7d3q3rsn5mivugi3lgm2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

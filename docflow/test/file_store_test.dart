@@ -29,9 +29,15 @@ void main() {
   });
 
   tearDown(() async {
+    // Close the database before removing the directory: on Windows SQLite
+    // keeps the file handle open and the delete fails with errno 32.
     await FileStore.instance.debugReset();
-    if (await sandbox.exists()) {
-      await sandbox.delete(recursive: true);
+    try {
+      if (await sandbox.exists()) {
+        await sandbox.delete(recursive: true);
+      }
+    } on FileSystemException {
+      // A leftover temp dir is harmless; the OS clears it.
     }
   });
 

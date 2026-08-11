@@ -58,9 +58,26 @@ class AuthService {
       }
     } catch (e) {
       debugPrint('Error during Google Sign-In: $e');
-      return null;
+      rethrow;
     }
   }
+
+  /// Sign in with email and password.
+  Future<UserCredential> signInWithEmail(String email, String password) async {
+    return await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  /// Create a new account with email and password.
+  Future<UserCredential> createUserWithEmail(String email, String password) async {
+    return await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
 
   /// Sign out from both Google and Firebase.
   ///
