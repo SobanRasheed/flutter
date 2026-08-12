@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -103,22 +105,39 @@ class _ScannerScreenState extends State<ScannerScreen>
   }
 
   Future<void> _capture() async {
-    if (_capturing) return;
+    if (_capturing || _camera == null || !_cameraReady) return;
     setState(() => _capturing = true);
-    await _shutter.forward(from: 0);
-    if (!mounted) return;
-    setState(() => _capturing = false);
+    _shutter.forward(from: 0);
 
-    // Codes resolve in place; page scans continue to the editor.
-    if (_mode.isCode) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_mode.label} detected')),
+    try {
+      final xfile = await _camera!.takePicture();
+      if (!mounted) return;
+
+      // Codes resolve in place; page scans continue to the editor.
+      if (_mode.isCode) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_mode.label} detected')),
+        );
+        return;
+      }
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ScanEditScreen(
+            mode: _mode,
+            capturedImage: File(xfile.path),
+          ),
+        ),
       );
-      return;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Capture failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _capturing = false);
     }
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ScanEditScreen(mode: _mode)),
-    );
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -13,7 +15,8 @@ class DocumentViewerScreen extends StatefulWidget {
   const DocumentViewerScreen({
     super.key,
     required this.title,
-    required this.thumbnail,
+    this.thumbnail = '',
+    this.pdfPath,
     this.pages = 1,
     this.file,
   });
@@ -31,6 +34,10 @@ class DocumentViewerScreen extends StatefulWidget {
 
   final String title;
   final String thumbnail;
+
+  /// When set, the viewer shows the actual saved file bytes instead of a
+  /// bundled thumbnail asset. Used after a scan-to-PDF conversion.
+  final String? pdfPath;
   final int pages;
 
   /// The library entry this view came from, when there is one. Fresh scans
@@ -138,7 +145,22 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                       itemBuilder: (context, index) => Center(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 32, 24, 12),
-                          child: PagePreview(asset: widget.thumbnail),
+                          child: widget.pdfPath != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(AppRadius.card),
+                                  child: Image.file(
+                                    File(widget.pdfPath!),
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Center(
+                                      child: Icon(
+                                        LucideIcons.fileText,
+                                        color: Colors.white54,
+                                        size: 64,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : PagePreview(asset: widget.thumbnail),
                         ),
                       ),
                     ),

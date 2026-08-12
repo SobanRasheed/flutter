@@ -3,8 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/tokens.dart';
 
-/// The DocFlow mark: ProScan's aperture logo geometry — a ring of six angled
-/// blades — recoloured to the brand blue.
+/// DocFlow SVG logo mark.
 class DocFlowLogo extends StatelessWidget {
   const DocFlowLogo({super.key, this.size = 32, this.color});
 
@@ -13,57 +12,20 @@ class DocFlowLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The SVG viewBox is 2400x1200 (2:1 ratio), so we render it at size×size
+    // but let flutter_svg fit it properly within the bounding box.
     return SvgPicture.asset(
       'assets/logo/logo.svg',
       width: size,
       height: size,
-      colorFilter: color != null 
+      fit: BoxFit.contain,
+      colorFilter: color != null
           ? ColorFilter.mode(color!, BlendMode.srcIn)
           : null,
     );
   }
 }
 
-class _AperturePainter extends CustomPainter {
-  const _AperturePainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = size.width / 2;
-    // Six blades, each a wedge inset from the centre so the gaps read as the
-    // aperture's spiral.
-    const bladeCount = 6;
-    const sweep = 6.283185307179586 / bladeCount;
-    const gap = 0.10;
-
-    for (var i = 0; i < bladeCount; i++) {
-      final start = sweep * i + gap;
-      final paint = Paint()
-        // Alternating opacity gives the two-tone look of the original mark.
-        ..color = i.isEven ? color : color.withValues(alpha: 0.72)
-        ..style = PaintingStyle.fill;
-
-      final path = Path()
-        ..moveTo(center.dx, center.dy)
-        ..arcTo(
-          Rect.fromCircle(center: center, radius: radius),
-          start,
-          sweep - gap * 2,
-          false,
-        )
-        ..close();
-      canvas.drawPath(path, paint);
-    }
-
-  }
-
-  @override
-  bool shouldRepaint(_AperturePainter oldDelegate) =>
-      oldDelegate.color != color;
-}
 
 /// Logo + wordmark, as it appears in the ProScan home/files/account headers.
 class DocFlowWordmark extends StatelessWidget {
@@ -76,19 +38,25 @@ class DocFlowWordmark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         DocFlowLogo(size: logoSize),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         RichText(
           text: TextSpan(
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: onDark ? Colors.white : AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 22,
                 ),
             children: const [
               TextSpan(text: 'Doc'),
               TextSpan(
                 text: 'Flow',
-                style: TextStyle(color: Color(0xFF3D53DC)),
+                style: TextStyle(
+                  color: Color(0xFF3D53DC),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),

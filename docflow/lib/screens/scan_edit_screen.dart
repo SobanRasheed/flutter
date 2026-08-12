@@ -1,32 +1,67 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:path/path.dart' as p;
 
 import '../core/tokens.dart';
 import '../models/scan_mode.dart';
+import '../services/conversion_service.dart';
 import '../widgets/scanner_chrome.dart';
 import 'document_viewer_screen.dart';
 
 /// Review and retouch a capture before it is saved. Dark ground, the page
 /// centred, a scrolling tool strip, then Scan More / Save PDF.
 class ScanEditScreen extends StatefulWidget {
-  const ScanEditScreen({super.key, required this.mode});
+  const ScanEditScreen({
+    super.key,
+    required this.mode,
+    required this.capturedImage,
+  });
 
   final ScanMode mode;
+
+  /// The actual image file captured from the camera.
+  final File capturedImage;
 
   @override
   State<ScanEditScreen> createState() => _ScanEditScreenState();
 }
 
 class _ScanEditScreenState extends State<ScanEditScreen> {
-  /// Untouched captures are titled by timestamp until the user renames them.
-  String _name = 'Scan - 12/30/2023 - 09:41';
+  late String _name;
   bool _renamed = false;
   ScanTool _tool = ScanTool.auto;
   PaperSize _paper = PaperSize.autoFit;
+  bool _saving = false;
+
+  final _conversionService = ConversionService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Default name is a timestamp like "Scan - 2024-01-30 09:41"
+    final now = DateTime.now();
+    _name =
+        'Scan - ${now.year}-${_pad(now.month)}-${_pad(now.day)} ${_pad(now.hour)}:${_pad(now.minute)}';
+  }
+
+  String _pad(int n) => n.toString().padLeft(2, '0');
+
+  @override
+  void dispose() {
+    _conversionService.dispose();
+    super.dispose();
+  }
 
   Future<void> _rename() async {
     final name = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => ScanRenameScreen(name: _name)),
+      MaterialPageRoute(
+        builder: (_) => ScanRenameScreen(
+          name: _name,
+          capturedImage: widget.capturedImage,
+        ),
+      ),
     );
     if (name == null || !mounted) return;
     setState(() {
@@ -39,7 +74,10 @@ class _ScanEditScreenState extends State<ScanEditScreen> {
     final paper = await Navigator.of(context).push<PaperSize>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => ResizeScreen(selected: _paper),
+        builder: (_) => ResizeScreen(
+          selected: _paper,
+          capturedImage: widget.capturedImage,
+        ),
       ),
     );
     if (paper == null || !mounted) return;
@@ -54,22 +92,62 @@ class _ScanEditScreenState extends State<ScanEditScreen> {
       case ScanTool.retake:
         if (mounted) Navigator.of(context).pop();
       case ScanTool.delete:
+        // Delete the temp captured image and go back.
+        try {
+          if (await widget.capturedImage.exists()) {
+            await widget.capturedImage.delete();
+          }
+        } catch (_) {}
         if (mounted) Navigator.of(context).pop();
       default:
         break;
     }
   }
 
-  void _save() {
-    // The scan lands in the library; the viewer is where it opens next.
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => DocumentViewerScreen(
-          title: _renamed ? _name : 'Job Application Letter',
-          thumbnail: 'assets/thumbnails/doc_01.png',
-        ),
-      ),
-    );
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+
+    try {
+      final outcome = await _conversionService.run(
+        toolId: 'image-to-pdf',
+        files: [widget.capturedImage],
+        outputName: _renamed ? _name : null,
+      );
+
+      if (!mounted) return;
+
+      switch (outcome) {
+        case ConversionSuccess(:final file):
+          // Clean up the temp camera file.
+          try {
+            if (await widget.capturedImage.exists()) {
+              await widget.capturedImage.delete();
+            }
+          } catch (_) {}
+
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => DocumentViewerScreen(
+                title: p.basenameWithoutExtension(file.name),
+                pdfPath: file.path,
+              ),
+            ),
+          );
+
+        case ConversionQuotaBlocked(:final message):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+
+        case ConversionFailure(:final message):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Save failed: $message')),
+          );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   @override
@@ -91,8 +169,8 @@ class _ScanEditScreenState extends State<ScanEditScreen> {
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-                        child: PagePreview(
-                          asset: 'assets/thumbnails/doc_01.png',
+                        child: _CapturedPagePreview(
+                          image: widget.capturedImage,
                           aspectRatio: _paper.aspectRatio,
                         ),
                       ),
@@ -116,15 +194,27 @@ class _ScanEditScreenState extends State<ScanEditScreen> {
                   Expanded(
                     child: _DarkButton(
                       label: 'Scan More',
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: _saving ? null : () => Navigator.of(context).pop(),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: _save,
-                      child: const Text('Save PDF'),
-                    ),
+                    child: _saving
+                        ? ElevatedButton(
+                            onPressed: null,
+                            child: const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                        : ElevatedButton(
+                            onPressed: _save,
+                            child: const Text('Save PDF'),
+                          ),
                   ),
                 ],
               ),
@@ -133,6 +223,36 @@ class _ScanEditScreenState extends State<ScanEditScreen> {
         ],
       ),
     );
+  }
+}
+
+/// Displays the real captured image inside the page frame.
+class _CapturedPagePreview extends StatelessWidget {
+  const _CapturedPagePreview({
+    required this.image,
+    this.aspectRatio,
+  });
+
+  final File image;
+  final double? aspectRatio;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget img = ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: Image.file(
+        image,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Center(
+          child: Icon(LucideIcons.imageOff, color: Colors.white54, size: 48),
+        ),
+      ),
+    );
+
+    if (aspectRatio != null) {
+      return AspectRatio(aspectRatio: aspectRatio!, child: img);
+    }
+    return img;
   }
 }
 
@@ -257,10 +377,10 @@ class _ToolButton extends StatelessWidget {
 
 /// Neutral counterpart to the primary pill, for the secondary action.
 class _DarkButton extends StatelessWidget {
-  const _DarkButton({required this.label, required this.onPressed});
+  const _DarkButton({required this.label, this.onPressed});
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -275,12 +395,16 @@ class _DarkButton extends StatelessWidget {
   }
 }
 
-/// Rename a scan. The title becomes an inline field in the header and the page
-/// dims behind it while the keyboard is up.
+/// Rename a scan.
 class ScanRenameScreen extends StatefulWidget {
-  const ScanRenameScreen({super.key, required this.name});
+  const ScanRenameScreen({
+    super.key,
+    required this.name,
+    required this.capturedImage,
+  });
 
   final String name;
+  final File capturedImage;
 
   @override
   State<ScanRenameScreen> createState() => _ScanRenameScreenState();
@@ -359,7 +483,7 @@ class _ScanRenameScreenState extends State<ScanRenameScreen> {
               ),
             ),
           ),
-          // The page stays visible but recedes while the title is edited.
+          // Show the real captured image behind the rename field.
           Expanded(
             child: ColoredBox(
               color: AppColors.darkSurface,
@@ -368,9 +492,7 @@ class _ScanRenameScreenState extends State<ScanRenameScreen> {
                   padding: const EdgeInsets.all(40),
                   child: Opacity(
                     opacity: 0.4,
-                    child: PagePreview(
-                      asset: 'assets/thumbnails/doc_01.png',
-                    ),
+                    child: _CapturedPagePreview(image: widget.capturedImage),
                   ),
                 ),
               ),
@@ -382,12 +504,16 @@ class _ScanRenameScreenState extends State<ScanRenameScreen> {
   }
 }
 
-/// Choose the output paper size. The preview reflows to the selection so the
-/// change is visible before it is committed.
+/// Choose the output paper size.
 class ResizeScreen extends StatefulWidget {
-  const ResizeScreen({super.key, required this.selected});
+  const ResizeScreen({
+    super.key,
+    required this.selected,
+    required this.capturedImage,
+  });
 
   final PaperSize selected;
+  final File capturedImage;
 
   @override
   State<ResizeScreen> createState() => _ResizeScreenState();
@@ -434,8 +560,8 @@ class _ResizeScreenState extends State<ResizeScreen> {
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-                        child: PagePreview(
-                          asset: 'assets/thumbnails/doc_01.png',
+                        child: _CapturedPagePreview(
+                          image: widget.capturedImage,
                           aspectRatio: _paper.aspectRatio,
                         ),
                       ),
