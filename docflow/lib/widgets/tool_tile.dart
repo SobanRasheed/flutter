@@ -47,7 +47,7 @@ class ToolTile extends StatelessWidget {
             decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
             child: Icon(icon, size: 22, color: color),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // Flexible so a taller fallback font drops the label to one line
           // instead of overflowing the fixed grid cell.
           Flexible(
@@ -59,7 +59,7 @@ class ToolTile extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textLabel,
                     fontWeight: FontWeight.w600,
-                    height: 1.3,
+                    height: 1.2,
                   ),
             ),
           ),
@@ -89,7 +89,7 @@ class ToolGrid extends StatelessWidget {
         crossAxisCount: 4,
         mainAxisSpacing: 18,
         crossAxisSpacing: 8,
-        childAspectRatio: 0.86,
+        childAspectRatio: 0.78,
       ),
       children: [
         for (final tool in featured)
