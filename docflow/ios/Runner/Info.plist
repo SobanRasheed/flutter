@@ -4,6 +4,12 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>DocFlow needs camera access to scan documents, ID cards, QR codes, and barcodes.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>DocFlow needs microphone access for video document scanning.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DocFlow needs photo library access to import images for scanning and conversion.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

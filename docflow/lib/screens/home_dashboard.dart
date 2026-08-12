@@ -9,6 +9,7 @@ import '../widgets/docflow_logo.dart';
 import '../widgets/file_row.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/tool_tile.dart';
+import 'conversion_flow.dart';
 import 'convert_screen.dart';
 import 'recent_files_screen.dart';
 
@@ -16,7 +17,9 @@ import 'recent_files_screen.dart';
 /// button, a 4x2 tool grid ending in All Tools, then Recent Files. DocFlow's
 /// conversion tools fill the grid in place of ProScan's PDF utilities.
 class HomeDashboard extends StatefulWidget {
-  const HomeDashboard({super.key});
+  const HomeDashboard({super.key, this.onSeeAllFiles});
+
+  final VoidCallback? onSeeAllFiles;
 
   @override
   State<HomeDashboard> createState() => _HomeDashboardState();
@@ -41,7 +44,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   Future<void> _openTool(BuildContext context, ConversionTool tool) async {
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ConvertScreen(initialTool: tool)),
+      MaterialPageRoute(builder: (_) => ConversionFlow(tool: tool)),
     );
     // A conversion may have finished while that route was up.
     await _load();
@@ -55,10 +58,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
   }
 
   Future<void> _openRecentFiles(BuildContext context) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const RecentFilesScreen()),
-    );
-    await _load();
+    if (widget.onSeeAllFiles != null) {
+      widget.onSeeAllFiles!();
+    }
   }
 
   Future<void> _open(StoredFile file) async {

@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 
 import '../core/tokens.dart';
+import '../services/auth_service.dart';
+import 'app_shell.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 
@@ -44,6 +48,29 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _handleGoogleSignIn(BuildContext context) async {
+    try {
+      final credential = await AuthService().signInWithGoogle();
+      if (credential != null && context.mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AppShell()),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign in failed: $e')),
+        );
+      }
+    }
+  }
+
+  void _handleNotImplemented(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Coming soon!')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -74,18 +101,20 @@ class WelcomeScreen extends StatelessWidget {
                       const SizedBox(height: 36),
                       _SocialButton(
                         asset: 'assets/onboarding/social_google.png',
-                        onPressed: () => _openLogin(context),
+                        onPressed: () => _handleGoogleSignIn(context),
                       ),
                       const SizedBox(height: 20),
                       _SocialButton(
                         asset: 'assets/onboarding/social_facebook.png',
-                        onPressed: () => _openLogin(context),
+                        onPressed: () => _handleNotImplemented(context),
                       ),
-                      const SizedBox(height: 20),
-                      _SocialButton(
-                        asset: 'assets/onboarding/social_apple.png',
-                        onPressed: () => _openLogin(context),
-                      ),
+                      if (Platform.isIOS) ...[
+                        const SizedBox(height: 20),
+                        _SocialButton(
+                          asset: 'assets/onboarding/social_apple.png',
+                          onPressed: () => _handleNotImplemented(context),
+                        ),
+                      ],
                       const SizedBox(height: 28),
                       const _OrRule(),
                       const SizedBox(height: 28),

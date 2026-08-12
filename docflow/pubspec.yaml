@@ -47,6 +47,10 @@ dependencies:
   # Google Sign-In
   google_sign_in: ^6.3.0
 
+  # Camera & permissions
+  camera: ^0.11.1
+  permission_handler: ^11.4.0
+
   # File operations for document conversion
   http: ^1.4.0
   file_picker: ^9.2.2

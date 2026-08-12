@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -16,15 +17,21 @@ class PersonalInfoScreen extends StatefulWidget {
 class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   bool _editing = false;
 
-  final _name = TextEditingController(text: 'Andrew Ainsley');
-  final _email =
-      TextEditingController(text: 'andrew.ainsley@yourdomain.com');
-  final _phone = TextEditingController(text: '+1-300-555-0399');
-  final _address =
-      TextEditingController(text: '3517 W. Gray Street, New York');
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _address = TextEditingController();
   String _gender = 'Male';
   String _country = 'United States';
   DateTime _birthday = DateTime(1995, 12, 27);
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    _name.text = user?.displayName ?? '';
+    _email.text = user?.email ?? '';
+  }
 
   @override
   void dispose() {

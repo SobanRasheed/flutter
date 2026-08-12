@@ -16,9 +16,7 @@ class SecurityScreen extends StatefulWidget {
 
 class _SecurityScreenState extends State<SecurityScreen> {
   bool _rememberMe = true;
-  bool _biometricId = false;
-  bool _faceId = false;
-  bool _smsAuth = false;
+
   bool _googleAuth = false;
 
   @override
@@ -43,21 +41,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
               value: _rememberMe,
               onChanged: (v) => setState(() => _rememberMe = v),
             ),
-            _Toggle(
-              label: 'Biometric ID',
-              value: _biometricId,
-              onChanged: (v) => setState(() => _biometricId = v),
-            ),
-            _Toggle(
-              label: 'Face ID',
-              value: _faceId,
-              onChanged: (v) => setState(() => _faceId = v),
-            ),
-            _Toggle(
-              label: 'SMS Authenticator',
-              value: _smsAuth,
-              onChanged: (v) => setState(() => _smsAuth = v),
-            ),
+
             _Toggle(
               label: 'Google Authenticator',
               value: _googleAuth,

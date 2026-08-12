@@ -42,10 +42,10 @@ class ToolTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
-            child: Icon(icon, size: 26, color: color),
+            child: Icon(icon, size: 22, color: color),
           ),
           const SizedBox(height: 12),
           // Flexible so a taller fallback font drops the label to one line

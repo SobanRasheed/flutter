@@ -77,8 +77,6 @@ class _AccountScreenState extends State<AccountScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          const _ProfileCard(),
-          const SizedBox(height: 20),
           const _PrivacyCard(),
           const SizedBox(height: 20),
           SettingsRow(
@@ -214,93 +212,7 @@ Future<bool> showLogoutSheet(BuildContext context) {
   ).then((value) => value ?? false);
 }
 
-class _ProfileCard extends StatelessWidget {
-  const _ProfileCard();
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    const used = 465.0;
-    const total = 1024.0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 78,
-            height: 78,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryTint,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(LucideIcons.user,
-                size: 34, color: AppColors.primary),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'Andrew Ainsley',
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.field),
-                        border: Border.all(color: AppColors.primary),
-                      ),
-                      child: const Text(
-                        'Free',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '${used.toInt()} MB  /  ${total.toInt()} MB',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(fontSize: 15, color: AppColors.textMeta),
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  child: LinearProgressIndicator(
-                    value: used / total,
-                    minHeight: 8,
-                    backgroundColor: AppColors.divider,
-                    valueColor:
-                        const AlwaysStoppedAnimation(AppColors.primary),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _PrivacyCard extends StatelessWidget {
   const _PrivacyCard();

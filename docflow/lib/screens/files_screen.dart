@@ -112,7 +112,7 @@ class _FilesScreenState extends State<FilesScreen> {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: Row(
               children: [
-                Text('My Files', style: theme.textTheme.displayMedium),
+                Text('Recent Files', style: theme.textTheme.displayMedium),
                 const Spacer(),
                 IconButton(
                   onPressed: _loading ? null : _load,

@@ -26,7 +26,7 @@ class _AppShellState extends State<AppShell> {
 
   static const _tabs = [
     (icon: LucideIcons.home, label: 'Home'),
-    (icon: LucideIcons.folder, label: 'Files'),
+    (icon: LucideIcons.folder, label: 'Recent Files'),
     (icon: LucideIcons.combine, label: 'Convert'),
     (icon: LucideIcons.user, label: 'Account'),
   ];
@@ -37,7 +37,7 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(
         index: _index,
         children: [
-          const HomeDashboard(),
+          HomeDashboard(onSeeAllFiles: () => setState(() => _index = 1)),
           const FilesScreen(),
           const ConvertScreen(),
           const AccountScreen(),

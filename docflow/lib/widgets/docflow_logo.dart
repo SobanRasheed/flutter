@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/tokens.dart';
 
@@ -12,11 +13,13 @@ class DocFlowLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: size,
-      child: CustomPaint(
-        painter: _AperturePainter(color ?? AppColors.primary),
-      ),
+    return SvgPicture.asset(
+      'assets/logo/logo.svg',
+      width: size,
+      height: size,
+      colorFilter: color != null 
+          ? ColorFilter.mode(color!, BlendMode.srcIn)
+          : null,
     );
   }
 }
@@ -76,11 +79,19 @@ class DocFlowWordmark extends StatelessWidget {
       children: [
         DocFlowLogo(size: logoSize),
         const SizedBox(width: 12),
-        Text(
-          'DocFlow',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: onDark ? Colors.white : AppColors.textPrimary,
+        RichText(
+          text: TextSpan(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: onDark ? Colors.white : AppColors.textPrimary,
+                ),
+            children: const [
+              TextSpan(text: 'Doc'),
+              TextSpan(
+                text: 'Flow',
+                style: TextStyle(color: Color(0xFF3D53DC)),
               ),
+            ],
+          ),
         ),
       ],
     );

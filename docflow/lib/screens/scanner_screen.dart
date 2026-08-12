@@ -1,5 +1,7 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../core/tokens.dart';
 import '../models/scan_mode.dart';
@@ -27,6 +29,11 @@ class _ScannerScreenState extends State<ScannerScreen>
   bool _flashOn = false;
   bool _capturing = false;
 
+  // Camera state
+  CameraController? _camera;
+  bool _cameraReady = false;
+  bool _permissionDenied = false;
+
   // The finder line sweeps down and back; the ring fills once per capture.
   late final AnimationController _sweep = AnimationController(
     vsync: this,
@@ -39,9 +46,59 @@ class _ScannerScreenState extends State<ScannerScreen>
   );
 
   @override
+  void initState() {
+    super.initState();
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    // Ask for camera permission at runtime.
+    final status = await Permission.camera.request();
+    if (!mounted) return;
+
+    if (status.isDenied || status.isPermanentlyDenied) {
+      setState(() => _permissionDenied = true);
+      return;
+    }
+
+    // Find the back camera.
+    final cameras = await availableCameras();
+    if (!mounted || cameras.isEmpty) return;
+
+    final back = cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
+    );
+
+    _camera = CameraController(
+      back,
+      ResolutionPreset.high,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+
+    try {
+      await _camera!.initialize();
+      if (!mounted) return;
+      setState(() => _cameraReady = true);
+    } catch (e) {
+      debugPrint('Camera init error: $e');
+      if (mounted) setState(() => _permissionDenied = true);
+    }
+  }
+
+  Future<void> _toggleFlash() async {
+    if (_camera == null || !_cameraReady) return;
+    final next = !_flashOn;
+    await _camera!.setFlashMode(next ? FlashMode.torch : FlashMode.off);
+    setState(() => _flashOn = next);
+  }
+
+  @override
   void dispose() {
     _sweep.dispose();
     _shutter.dispose();
+    _camera?.dispose();
     super.dispose();
   }
 
@@ -80,11 +137,18 @@ class _ScannerScreenState extends State<ScannerScreen>
                 : _CaptureHeader(
                     flashOn: _flashOn,
                     onBack: () => Navigator.of(context).pop(),
-                    onToggleFlash: () =>
-                        setState(() => _flashOn = !_flashOn),
+                    onToggleFlash: _toggleFlash,
                   ),
           ),
-          Expanded(child: _Viewfinder(mode: _mode, sweep: _sweep)),
+          Expanded(
+            child: _Viewfinder(
+              mode: _mode,
+              sweep: _sweep,
+              camera: _camera,
+              cameraReady: _cameraReady,
+              permissionDenied: _permissionDenied,
+            ),
+          ),
           _ModeStrip(
             mode: _mode,
             onChanged: (m) => setState(() => _mode = m),
@@ -210,13 +274,22 @@ class _CodeHeader extends StatelessWidget {
   }
 }
 
-/// The camera area. A real preview would sit where the placeholder is; the
-/// framing guide for the active mode is painted over it.
+/// The camera area. Shows a real [CameraPreview] when available; falls back to
+/// a permission-denied prompt or a loading indicator.
 class _Viewfinder extends StatelessWidget {
-  const _Viewfinder({required this.mode, required this.sweep});
+  const _Viewfinder({
+    required this.mode,
+    required this.sweep,
+    required this.camera,
+    required this.cameraReady,
+    required this.permissionDenied,
+  });
 
   final ScanMode mode;
   final Animation<double> sweep;
+  final CameraController? camera;
+  final bool cameraReady;
+  final bool permissionDenied;
 
   @override
   Widget build(BuildContext context) {
@@ -224,11 +297,24 @@ class _Viewfinder extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          const ColoredBox(color: AppColors.darkSurface),
-          Center(
-            child: Icon(mode.icon, size: 64, color: AppColors.darkDivider),
-          ),
-          // Book mode guides the whole frame; the rest frame a subject.
+          // ── Background: real preview, permission prompt, or spinner ──
+          if (permissionDenied)
+            _PermissionPrompt()
+          else if (cameraReady && camera != null)
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: camera!.value.previewSize!.height,
+                height: camera!.value.previewSize!.width,
+                child: CameraPreview(camera!),
+              ),
+            )
+          else
+            const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+
+          // ── Framing overlays (always on top) ──
           if (mode.isSplit)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
@@ -252,6 +338,62 @@ class _Viewfinder extends StatelessWidget {
               child: DarkPill(label: mode.hint!),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Shown when the user has denied camera permission.
+class _PermissionPrompt extends StatelessWidget {
+  const _PermissionPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppColors.darkSurface,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.cameraOff,
+                  size: 56, color: AppColors.darkDivider),
+              const SizedBox(height: 20),
+              const Text(
+                'Camera Access Needed',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'DocFlow needs camera permission to scan documents.\n'
+                'Please enable it in your device settings.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+              ),
+              const SizedBox(height: 28),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                  shape: const StadiumBorder(),
+                ),
+                onPressed: () => openAppSettings(),
+                icon: const Icon(LucideIcons.settings, size: 18),
+                label: const Text(
+                  'Open Settings',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

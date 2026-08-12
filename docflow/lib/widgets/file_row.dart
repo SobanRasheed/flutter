@@ -36,11 +36,11 @@ class FileRow extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadius.tile),
           child: Padding(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.all(10),
             child: Row(
               children: [
                 _Thumbnail(file: file),
-                const SizedBox(width: 18),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,7 +97,7 @@ class FileCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(AppRadius.tile),
@@ -105,7 +105,7 @@ class FileCard extends StatelessWidget {
       child: Row(
         children: [
           _Thumbnail(file: file),
-          const SizedBox(width: 18),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,14 +147,14 @@ class _Thumbnail extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
-        width: 88,
-        height: 88,
+        width: 54,
+        height: 54,
         child: thumbnail == null
             ? _DrawnSheet(format: file.format)
             : Image.asset(
                 thumbnail,
-                width: 88,
-                height: 88,
+                width: 54,
+                height: 54,
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
               ),
@@ -172,28 +172,28 @@ class _DrawnSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(format.icon, size: 16, color: format.color),
-          const SizedBox(height: 8),
-          for (var i = 0; i < 5; i++) ...[
+          Icon(format.icon, size: 12, color: format.color),
+          const SizedBox(height: 4),
+          for (var i = 0; i < 3; i++) ...[
             Container(
               height: 2,
-              width: i.isEven ? 58 : 44,
+              width: i.isEven ? 36 : 24,
               decoration: BoxDecoration(
                 color: AppColors.divider,
                 borderRadius: BorderRadius.circular(1),
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 3),
           ],
           const Spacer(),
           Text(
             format.extension.toUpperCase(),
             style: TextStyle(
-              fontSize: 8,
+              fontSize: 6,
               fontWeight: FontWeight.w800,
               color: format.color,
             ),
