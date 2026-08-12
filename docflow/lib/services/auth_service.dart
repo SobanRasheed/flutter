@@ -79,6 +79,17 @@ class AuthService {
   }
 
 
+  /// Sends a Firebase password-reset email to [email].
+  ///
+  /// Firebase delivers a secure link directly to the inbox. The user taps the
+  /// link, enters a new password, and is signed back in — no OTP code needed
+  /// on our side.
+  ///
+  /// Throws [FirebaseAuthException] on invalid address or network errors.
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email.trim());
+  }
+
   /// Sign out from both Google and Firebase.
   ///
   /// On web, skips Google sign-out to avoid crash from uninitialised
