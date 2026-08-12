@@ -12,16 +12,29 @@ class DocFlowLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The SVG viewBox is 2400x1200 (2:1 ratio), so we render it at size×size
-    // but let flutter_svg fit it properly within the bounding box.
-    return SvgPicture.asset(
-      'assets/logo/logo.svg',
-      width: size,
+    // The SVG canvas is 2400×1200 but the logo mark only occupies roughly
+    // x:[930,1620] y:[295,895] — a 690×600 region.
+    // Strategy: render the SVG at 2× height so 600 SVG units = `size` pixels,
+    // then use OverflowBox + ClipRect to pan to that region and clip everything
+    // outside it.
+    return SizedBox(
+      width: size * 1.15, // content aspect ratio: 690/600 ≈ 1.15
       height: size,
-      fit: BoxFit.contain,
-      colorFilter: color != null
-          ? ColorFilter.mode(color!, BlendMode.srcIn)
-          : null,
+      child: ClipRect(
+        child: OverflowBox(
+          maxWidth: double.infinity,
+          maxHeight: double.infinity,
+          // Shifts the viewport so the logo mark is centred in the box.
+          alignment: const Alignment(0.08, -0.01),
+          child: SvgPicture.asset(
+            'assets/logo/logo.svg',
+            height: size * 2, // scale: 600 SVG units → size px
+            colorFilter: color != null
+                ? ColorFilter.mode(color!, BlendMode.srcIn)
+                : null,
+          ),
+        ),
+      ),
     );
   }
 }
