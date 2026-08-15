@@ -14,7 +14,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "709844626901-5r8rdnr6bq1sh8u966titaiah5b7k266.apps.googleusercontent.com",
+          "client_id": "REDACTED_ANDROID_CLIENT_ID.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.docflow",
@@ -22,20 +22,20 @@
           }
         },
         {
-          "client_id": "709844626901-dvfkresqoc0p7d3q3rsn5mivugi3lgm2.apps.googleusercontent.com",
+          "client_id": "REDACTED_WEB_CLIENT_ID.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCUf5jPx4C8cnmclbj9-r4QSCYmuOytTBE"
+          "current_key": "REDACTED_FIREBASE_API_KEY"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "709844626901-dvfkresqoc0p7d3q3rsn5mivugi3lgm2.apps.googleusercontent.com",
+              "client_id": "REDACTED_WEB_CLIENT_ID.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

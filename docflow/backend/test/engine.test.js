@@ -143,7 +143,7 @@ console.log('\nzip-producing tools');
 
 console.log('\nsecurity tools');
 {
-  const p = await convert('protect-pdf', pdf(), { password: 'hunter2hunter2' });
+  const p = await convert('protect-pdf', pdf(), { password: 'example-test-password' });
   const text = p.buffer.toString('latin1');
   check('protect returns a PDF', isPdf(p.buffer), p.contentType);
   check('protect output declares /Encrypt', text.includes('/Encrypt'), 'no /Encrypt dictionary');
