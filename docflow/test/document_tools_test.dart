@@ -58,14 +58,14 @@ void main() {
       expect(tester.widget<ElevatedButton>(cta).onPressed, isNull);
 
       final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'hunter2hunter2');
+      await tester.enterText(fields.at(0), 'example-test-password');
       await tester.enterText(fields.at(1), 'nope');
       await tester.pumpAndSettle();
 
       expect(find.text('Passwords do not match'), findsOneWidget);
       expect(tester.widget<ElevatedButton>(cta).onPressed, isNull);
 
-      await tester.enterText(fields.at(1), 'hunter2hunter2');
+      await tester.enterText(fields.at(1), 'example-test-password');
       await tester.pumpAndSettle();
 
       expect(find.text('Passwords do not match'), findsNothing);
