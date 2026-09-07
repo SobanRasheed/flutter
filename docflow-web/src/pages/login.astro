@@ -1,0 +1,205 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Log in — DocFlow" description="Log in to DocFlow to convert documents in your browser.">
+  <section class="auth-page">
+    <div class="container auth-container">
+      <div class="auth-card card">
+        <img src="/logo.png" alt="DocFlow" width="44" height="44" />
+        <h1>Welcome back</h1>
+        <p class="auth-sub">Log in to keep converting. Your quota follows your account.</p>
+
+        <div id="error-slot"></div>
+
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" autocomplete="email" required placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" autocomplete="current-password" required placeholder="Your password" />
+          </div>
+          <button class="btn btn-primary btn-lg submit-btn" type="submit" id="submit-btn">Log in</button>
+        </form>
+
+        <button class="btn btn-ghost google-btn" id="google-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <p class="auth-alt">
+          New to DocFlow? <a href="/signup">Create a free account</a>
+        </p>
+        <p class="auth-alt">
+          <a href="#" id="forgot-link">Forgot your password?</a>
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .auth-page {
+    padding: 72px 0 96px;
+    background:
+      radial-gradient(800px 400px at 85% -10%, #eef0ff 0%, transparent 60%);
+    min-height: 70vh;
+  }
+
+  .auth-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .auth-card img {
+    border-radius: 10px;
+    margin: 0 auto 18px;
+  }
+
+  .auth-card h1 {
+    font-size: 26px;
+    text-align: center;
+  }
+
+  .auth-sub {
+    text-align: center;
+    color: var(--text-2);
+    font-size: 14.5px;
+    margin: 8px 0 26px;
+  }
+
+  .auth-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .google-btn {
+    width: 100%;
+    margin-top: 14px;
+    justify-content: center;
+  }
+
+  .auth-alt {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-2);
+    margin-top: 18px;
+  }
+
+  .auth-alt a {
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .auth-alt a:hover {
+    color: var(--primary-deep);
+  }
+
+  #error-slot:empty {
+    display: none;
+  }
+
+  #error-slot {
+    margin-bottom: 16px;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-faint);
+    font-size: 12px;
+    margin-top: 18px;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--divider);
+  }
+</style>
+
+<script>
+  import { loginEmail, loginGoogle, requestPasswordReset, friendlyAuthError } from '../lib/firebase';
+
+  const params = new URLSearchParams(location.search);
+  const next = params.get('next') || '/';
+  const errorSlot = document.getElementById('error-slot')!;
+  const form = document.getElementById('login-form') as HTMLFormElement;
+  const email = document.getElementById('email') as HTMLInputElement;
+  const password = document.getElementById('password') as HTMLInputElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const googleBtn = document.getElementById('google-btn') as HTMLButtonElement;
+  const forgotLink = document.getElementById('forgot-link') as HTMLAnchorElement;
+
+  function showError(message: string) {
+    errorSlot.innerHTML = `<div class="alert alert-error">${message}</div>`;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorSlot.innerHTML = '';
+    if (!email.value || !password.value) {
+      showError('Please enter your email and password.');
+      return;
+    }
+    submitBtn.disabled = true;
+    try {
+      await loginEmail(email.value.trim(), password.value);
+      location.href = next;
+    } catch (err) {
+      showError(friendlyAuthError(err));
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+  googleBtn.addEventListener('click', async () => {
+    errorSlot.innerHTML = '';
+    googleBtn.disabled = true;
+    try {
+      await loginGoogle();
+      location.href = next;
+    } catch (err) {
+      showError(friendlyAuthError(err));
+    } finally {
+      googleBtn.disabled = false;
+    }
+  });
+
+  forgotLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    errorSlot.innerHTML = '';
+    if (!email.value.trim()) {
+      showError('Type your email above first, then click "Forgot your password?".');
+      return;
+    }
+    try {
+      await requestPasswordReset(email.value.trim());
+      errorSlot.innerHTML =
+        '<div class="alert alert-info">Password reset email sent. Check your inbox.</div>';
+    } catch (err) {
+      showError(friendlyAuthError(err));
+    }
+  });
+</script>

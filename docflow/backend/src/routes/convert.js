@@ -108,7 +108,13 @@ router.post(
       throw err;
     }
 
-    const filename = tool.outputName(files, req.body ?? {});
+    // auto-rename is the one tool whose filename is decided upstream, by the
+    // title Stirling detects in the document — its registry entry returns null
+    // so Stirling's own Content-Disposition wins.
+    const fallbackName =
+      (result.disposition?.match(/filename="?([^";]+)"?/)?.[1] ?? '').replace(/"/g, '')
+      || 'document';
+    const filename = tool.outputName?.(files, req.body ?? {}) ?? fallbackName;
     res.setHeader('Content-Type', result.contentType);
     res.setHeader(
       'Content-Disposition',

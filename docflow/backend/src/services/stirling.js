@@ -13,13 +13,17 @@ export async function runConversion({ tool, files, fields, onAbort }) {
   const url = `${config.stirling.baseUrl}${tool.endpoint}`;
 
   const form = new FormData();
-  for (const file of files) {
+  // Most endpoints take every upload as fileInput; a few name their slots
+  // (overlay-pdfs: fileInput + overlayFiles, add-image: fileInput + imageFile).
+  // tool.fileFields[i] names file i; extra files repeat the last entry.
+  const fieldNames = tool.fileFields ?? [];
+  files.forEach((file, index) => {
     form.append(
-      'fileInput',
+      fieldNames[index] ?? (fieldNames.length ? fieldNames[fieldNames.length - 1] : 'fileInput'),
       new Blob([file.buffer], { type: file.mimetype || 'application/octet-stream' }),
       file.originalname,
     );
-  }
+  });
   for (const [key, value] of Object.entries(fields)) {
     if (value !== undefined && value !== null) form.append(key, String(value));
   }
@@ -120,6 +124,9 @@ export async function runConversion({ tool, files, fields, onAbort }) {
     body: response.body,
     contentType: generic ? tool.contentType : upstreamType,
     contentLength: response.headers.get('content-length'),
+    // Forwards Stirling's own filename (e.g. auto-rename's detected title) so
+    // the route can use it when the registry has no outputName of its own.
+    disposition: response.headers.get('content-disposition') || null,
   };
 }
 

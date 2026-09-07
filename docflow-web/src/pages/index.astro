@@ -1,0 +1,615 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolCard from '../components/ToolCard.astro';
+import { TOOLS, CATEGORIES, ICONS, type Tool } from '../lib/tools';
+
+const popular = TOOLS.filter((t: Tool) => t.popular);
+const byCategory = CATEGORIES.map((c) => ({ ...c, tools: TOOLS.filter((t: Tool) => t.category === c.id) }));
+
+const trust = [
+  {
+    title: 'Processed in memory',
+    text: 'Your files never touch disk on our servers — they exist in RAM for the duration of one request, then they are gone.',
+  },
+  {
+    title: 'No file storage',
+    text: 'We do not keep, cache, or archive documents. There is no document storage to breach.',
+  },
+  {
+    title: 'Verified accounts',
+    text: 'Every conversion is tied to a verified account, which keeps the service fast and abuse-free.',
+  },
+  {
+    title: 'Same engine as the app',
+    text: 'The website runs on the exact same conversion engine as the DocFlow mobile app — identical output quality.',
+  },
+  {
+    title: 'Works in any browser',
+    text: 'No downloads or extensions. Open a tool page, drop a file, download the result.',
+  },
+  {
+    title: 'Fair free tier',
+    text: '100 conversions every month on the free plan, with your counter always visible.',
+  },
+];
+---
+
+<BaseLayout title="DocFlow — Every document tool in one simple flow">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <span class="badge">Powered by the same engine as the DocFlow mobile app</span>
+      <h1>We make documents <em>easy</em>.</h1>
+      <p class="hero-sub">
+        Convert, merge, split, compress, protect and watermark PDFs — all in your
+        browser, all in one place. Free every month.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="#tools">Start converting — it's free</a>
+        <a class="btn btn-ghost btn-lg" href="/signup">Create an account</a>
+      </div>
+      <div class="hero-tools">
+        {popular.slice(0, 6).map((t: Tool) => (
+          <a href={`/tools/${t.id}`} class="hero-tool" style={`--c:${t.color};--t:${t.tint}`}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={ICONS[t.icon]} />
+            <span>{t.title}</span>
+          </a>
+        ))}
+      </div>
+      <img
+        class="hero-art"
+        src="/images/hero.png"
+        alt="Illustration of document pages flowing through DocFlow and transforming between formats"
+        width="832"
+        height="464"
+      />
+    </div>
+  </section>
+
+  <!-- Popular tools -->
+  <section class="section section-muted" id="popular">
+    <div class="container">
+      <div class="section-head fade-up">
+        <h2>The tools people use most</h2>
+        <p>One click each. No watermarks, no sign-up walls mid-flow.</p>
+      </div>
+      <div class="popular-grid fade-up">
+        {popular.map((t: Tool) => <ToolCard tool={t} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- All tools with category filter -->
+  <section class="section" id="tools">
+    <div class="container">
+      <div class="section-head fade-up">
+        <h2>All DocFlow tools</h2>
+        <p>Everything is processed in memory and never stored.</p>
+      </div>
+      <div class="filter-row" id="filter-row" role="tablist" aria-label="Tool categories">
+        <button class="filter-chip is-active" data-cat="all" role="tab" aria-selected="true">All</button>
+        {byCategory.map((c) => (
+          <button class="filter-chip" data-cat={c.id} role="tab" aria-selected="false">{c.label}</button>
+        ))}
+      </div>
+      <div class="tools-grid fade-up" id="tools-grid">
+        {TOOLS.map((t: Tool) => <ToolCard tool={t} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section section-muted" id="features">
+    <div class="container">
+      <div class="section-head fade-up">
+        <h2>Documents in, done in seconds</h2>
+        <p>DocFlow wraps a professional conversion engine in the simplest flow on the web.</p>
+      </div>
+      <div class="feature-row fade-up">
+        <div class="feature-copy">
+          <span class="kicker">Convert anything</span>
+          <h3>PDF to Word, Excel, images — and back</h3>
+          <p>
+            Turn editable documents into clean PDFs, extract content back out, or
+            render pages as images. Formats are preserved so the result looks the
+            way you expect.
+          </p>
+          <a class="btn-link" href="/tools/pdf-to-word">Try PDF to Word →</a>
+        </div>
+        <div class="feature-visual" style="--tint: var(--amber-tint); --accent: var(--amber);">
+          <img src="/images/feature-convert.png" alt="Illustration of a document transforming into a spreadsheet and an image" width="736" height="568" loading="lazy" />
+        </div>
+      </div>
+      <div class="feature-row flip fade-up">
+        <div class="feature-copy">
+          <span class="kicker">Organize</span>
+          <h3>Merge, split and reorder pages</h3>
+          <p>
+            Combine contracts into one file, extract the pages you actually need,
+            and get a tidy ZIP or a single merged document — in the exact order
+            you choose.
+          </p>
+          <a class="btn-link" href="/tools/merge-pdf">Try Merge PDF →</a>
+        </div>
+        <div class="feature-visual" style="--tint: var(--coral-tint); --accent: var(--coral);">
+          <img src="/images/feature-organize.png" alt="Illustration of pages merging into one stack while others are archived" width="736" height="568" loading="lazy" />
+        </div>
+      </div>
+      <div class="feature-row fade-up">
+        <div class="feature-copy">
+          <span class="kicker">Optimize &amp; secure</span>
+          <h3>Compress, password-protect, watermark</h3>
+          <p>
+            Shrink heavy PDFs for email, lock sensitive documents behind AES-256
+            encryption, or stamp a watermark across every page before you share.
+          </p>
+          <a class="btn-link" href="/tools/compress-pdf">Try Compress PDF →</a>
+        </div>
+        <div class="feature-visual" style="--tint: var(--violet-tint); --accent: var(--violet);">
+          <img src="/images/feature-secure.png" alt="Illustration of a document protected by a shield and padlock" width="736" height="568" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section" id="pricing">
+    <div class="container">
+      <div class="section-head fade-up">
+        <h2>Simple pricing</h2>
+        <p>Start free. Upgrade in the mobile app when you need more.</p>
+      </div>
+      <div class="pricing-grid fade-up">
+        <div class="card pricing-card">
+          <h3>Free</h3>
+          <div class="price"><span>$0</span><small>/month</small></div>
+          <ul>
+            <li>100 conversions every month</li>
+            <li>All {TOOLS.length} tools unlocked</li>
+            <li>Files up to 50 MB</li>
+            <li>In-memory processing</li>
+            <li>Web + mobile apps</li>
+          </ul>
+          <a class="btn btn-ghost" href="/signup">Get started</a>
+        </div>
+        <div class="card pricing-card featured">
+          <span class="pricing-flag">Popular</span>
+          <h3>Pro</h3>
+          <div class="price"><span>$4.99</span><small>/month</small></div>
+          <ul>
+            <li>Unlimited conversions</li>
+            <li>All {TOOLS.length} tools unlocked</li>
+            <li>Files up to 50 MB</li>
+            <li>Priority processing</li>
+            <li>Web + mobile apps</li>
+          </ul>
+          <a class="btn btn-primary" href="/signup">Create account</a>
+          <p class="pricing-note">Upgrade to Pro any time inside the DocFlow mobile app.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust -->
+  <section class="section section-muted" id="trust">
+    <div class="container">
+      <div class="section-head fade-up">
+        <h2>Why people choose DocFlow</h2>
+        <p>Privacy-first by architecture, not by policy.</p>
+      </div>
+      <div class="trust-grid fade-up">
+        {trust.map((item) => (
+          <div class="trust-item card">
+            <h4>{item.title}</h4>
+            <p>{item.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="cta-band">
+    <div class="container cta-inner fade-up">
+      <h2>Try DocFlow for free</h2>
+      <p>Your first 100 conversions are on us — every month.</p>
+      <a class="btn btn-primary btn-lg cta-btn" href="/signup">Sign up free</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Hero */
+  .hero {
+    padding: 96px 0 84px;
+    background:
+      radial-gradient(900px 420px at 15% -10%, #eef0ff 0%, transparent 60%),
+      radial-gradient(700px 380px at 90% 0%, #f2f0ff 0%, transparent 55%);
+    text-align: center;
+  }
+
+  .hero-inner > .badge {
+    margin-bottom: 26px;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 7vw, 68px);
+    font-weight: 800;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--primary);
+  }
+
+  .hero-sub {
+    max-width: 560px;
+    margin: 22px auto 0;
+    font-size: 19px;
+    color: var(--text-2);
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    margin-top: 34px;
+    flex-wrap: wrap;
+  }
+
+  .hero-tools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 54px;
+  }
+
+  .hero-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: #fff;
+    border: 1px solid var(--divider);
+    border-radius: 999px;
+    padding: 9px 18px 9px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .hero-tool:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .hero-tool svg {
+    color: var(--c);
+    background: var(--t);
+    border-radius: 50%;
+    padding: 5px;
+    width: 26px;
+    height: 26px;
+  }
+
+  .hero-art {
+    width: min(860px, 100%);
+    margin-top: 48px;
+    border-radius: 22px;
+    border: 1px solid rgb(0 0 0 / 0.05);
+    box-shadow: 0 28px 64px rgb(75 104 255 / 0.14);
+  }
+
+  /* Grids */
+  .popular-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .filter-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 38px;
+  }
+
+  .filter-chip {
+    border: 1px solid var(--divider);
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-2);
+    transition: all 0.15s ease;
+  }
+
+  .filter-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .filter-chip.is-active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+
+  /* Features */
+  .feature-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+    max-width: 980px;
+    margin: 0 auto 64px;
+  }
+
+  .feature-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .feature-row.flip .feature-copy {
+    order: 2;
+  }
+
+  .feature-row.flip .feature-visual {
+    order: 1;
+  }
+
+  .feature-copy h3 {
+    font-size: clamp(24px, 3vw, 32px);
+    margin-bottom: 14px;
+  }
+
+  .feature-copy p {
+    color: var(--text-2);
+    font-size: 16px;
+  }
+
+  .feature-copy .btn-link {
+    margin-top: 18px;
+    display: inline-block;
+  }
+
+  .feature-visual {
+    border-radius: var(--radius-card);
+    background: var(--tint);
+    overflow: hidden;
+    min-height: 260px;
+    border: 1px solid rgb(0 0 0 / 0.04);
+  }
+
+  .feature-visual img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 260px;
+    object-fit: cover;
+  }
+
+  /* Pricing */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 400px));
+    gap: 26px;
+    justify-content: center;
+  }
+
+  .pricing-card {
+    padding: 34px 32px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pricing-card.featured {
+    border-color: var(--primary);
+    box-shadow: 0 16px 44px rgb(75 104 255 / 0.16);
+  }
+
+  .pricing-flag {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 999px;
+  }
+
+  .pricing-card .price {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 10px 0 22px;
+  }
+
+  .pricing-card .price span {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .pricing-card .price small {
+    color: var(--text-faint);
+    font-size: 15px;
+  }
+
+  .pricing-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    flex: 1;
+  }
+
+  .pricing-card li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: var(--text-2);
+  }
+
+  .pricing-card li::before {
+    content: '';
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--green-tint)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e9e74' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+      center / 11px no-repeat;
+  }
+
+  .pricing-card .btn {
+    width: 100%;
+  }
+
+  .pricing-note {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-faint);
+    text-align: center;
+  }
+
+  /* Trust */
+  .trust-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .trust-item {
+    padding: 26px 24px;
+  }
+
+  .trust-item h4 {
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+
+  .trust-item p {
+    font-size: 14.5px;
+    color: var(--text-2);
+  }
+
+  /* CTA band */
+  .cta-band {
+    background: linear-gradient(120deg, var(--primary-deep), var(--primary) 55%, var(--primary-light));
+    color: #fff;
+    padding: 84px 0;
+    text-align: center;
+  }
+
+  .cta-band h2 {
+    font-size: clamp(28px, 4vw, 42px);
+  }
+
+  .cta-band p {
+    margin-top: 12px;
+    font-size: 17px;
+    opacity: 0.85;
+  }
+
+  .cta-band .cta-btn {
+    background: #fff;
+    color: var(--primary-deep);
+    box-shadow: 0 12px 28px rgb(0 0 0 / 0.2);
+    margin-top: 30px;
+  }
+
+  .cta-band .cta-btn:hover {
+    background: #f2f4ff;
+  }
+
+  /* Responsive */
+  @media (max-width: 980px) {
+    .tools-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .trust-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .popular-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .feature-row {
+      grid-template-columns: 1fr;
+      gap: 28px;
+      margin-bottom: 48px;
+    }
+    .feature-row.flip .feature-copy {
+      order: 1;
+    }
+    .feature-row.flip .feature-visual {
+      order: 2;
+    }
+    .feature-visual,
+    .feature-visual img {
+      min-height: 180px;
+    }
+    .pricing-grid {
+      grid-template-columns: 1fr;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .hero {
+      padding: 64px 0 56px;
+    }
+    .tools-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .trust-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // Category filter for the all-tools grid.
+  const chips = document.querySelectorAll<HTMLButtonElement>('.filter-chip');
+  const cards = document.querySelectorAll<HTMLElement>('#tools-grid .tool-card');
+  cards.forEach((card) => {
+    // Category is stamped on the card at build time (ToolCard's data-cat).
+    if (!card.dataset.cat) card.dataset.cat = 'all';
+  });
+
+  chips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      chips.forEach((c) => {
+        c.classList.remove('is-active');
+        c.setAttribute('aria-selected', 'false');
+      });
+      chip.classList.add('is-active');
+      chip.setAttribute('aria-selected', 'true');
+      const cat = chip.dataset.cat;
+      for (const card of cards) {
+        (card as HTMLElement).style.display = !cat || cat === 'all' || card.dataset.cat === cat ? '' : 'none';
+      }
+    });
+  });
+</script>

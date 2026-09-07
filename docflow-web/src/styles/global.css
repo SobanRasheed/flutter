@@ -1,0 +1,340 @@
+/* DocFlow design tokens — sampled from the mobile app (lib/core/tokens.dart)
+   so the web and mobile products share one visual language. */
+
+:root {
+  /* Brand */
+  --primary: #4b68ff;
+  --primary-light: #5e78ff;
+  --primary-deep: #3b4fd4;
+  --primary-soft: #97aefe;
+  --primary-tint: #f2f2fe;
+
+  /* Neutrals */
+  --bg: #ffffff;
+  --surface-muted: #fafafa;
+  --divider: #eeeeee;
+  --text: #212121;
+  --text-2: #616161;
+  --text-meta: #757575;
+  --text-label: #424242;
+  --text-faint: #9e9e9e;
+
+  /* Accents (tool grid) */
+  --amber: #fca82f;
+  --coral: #fa5b5d;
+  --violet: #7b5eff;
+  --green: #39d9a1;
+  --brown: #a9715e;
+  --amber-tint: #fff7eb;
+  --coral-tint: #fff1f1;
+  --violet-tint: #f3f3ff;
+  --green-tint: #daf4ee;
+  --brown-tint: #f8f4f2;
+
+  /* Shape + shadow */
+  --radius-card: 20px;
+  --radius-tile: 16px;
+  --radius-field: 12px;
+  --shadow-sm: 0 1px 2px rgb(33 33 33 / 0.05);
+  --shadow-md: 0 6px 24px rgb(33 33 33 / 0.08);
+  --shadow-lg: 0 16px 48px rgb(33 33 33 / 0.12);
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --container: 1140px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+}
+
+img,
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+  font-weight: 700;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 12px 26px;
+  border: 1px solid transparent;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease,
+    transform 0.18s ease, border-color 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 8px 20px rgb(75 104 255 / 0.28);
+}
+.btn-primary:hover {
+  background: var(--primary-deep);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--divider);
+}
+.btn-ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 15px;
+}
+.btn-link:hover {
+  color: var(--primary-deep);
+}
+
+.btn-lg {
+  padding: 15px 34px;
+  font-size: 16px;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- Sections ---------- */
+.section {
+  padding: 88px 0;
+}
+
+.section-muted {
+  background: var(--surface-muted);
+}
+
+.section-head {
+  max-width: 640px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.section-head h2 {
+  font-size: clamp(28px, 4vw, 40px);
+}
+
+.section-head p {
+  margin-top: 14px;
+  color: var(--text-2);
+  font-size: 17px;
+}
+
+.kicker {
+  display: inline-block;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: #fff;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Forms ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-label);
+}
+
+.field .help {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.field input[type='text'],
+.field input[type='password'],
+.field input[type='email'],
+.field input[type='number'],
+.field select {
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-field);
+  padding: 11px 14px;
+  font-size: 15px;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(75 104 255 / 0.14);
+}
+
+.field.color-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.field input[type='color'] {
+  width: 44px;
+  height: 38px;
+  padding: 2px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-field);
+  background: #fff;
+}
+
+.field input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.check-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.check-field label {
+  font-weight: 500;
+}
+
+/* ---------- Alerts ---------- */
+.alert {
+  border-radius: var(--radius-field);
+  padding: 13px 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  border: 1px solid;
+}
+
+.alert-error {
+  background: var(--coral-tint);
+  border-color: #ffd7d7;
+  color: #c0392b;
+}
+
+.alert-info {
+  background: var(--primary-tint);
+  border-color: #dcdffb;
+  color: var(--primary-deep);
+}
+
+/* ---------- Misc ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--primary-tint);
+  color: var(--primary-deep);
+}
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-up.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .section {
+    padding: 56px 0;
+  }
+  .container {
+    padding: 0 18px;
+  }
+}

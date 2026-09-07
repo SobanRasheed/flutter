@@ -1,0 +1,130 @@
+---
+import { TOOLS, CATEGORIES } from '../lib/tools';
+import type { Tool } from '../lib/tools';
+
+const byCategory = CATEGORIES.map((c) => ({
+  ...c,
+  tools: TOOLS.filter((t: Tool) => t.category === c.id),
+})).filter((c) => c.tools.length > 0);
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="/" class="brand">
+          <img src="/logo.png" alt="DocFlow" width="30" height="30" />
+          <span>DocFlow</span>
+        </a>
+        <p>
+          Every document tool you need, in one simple flow. Built on a
+          privacy-first conversion engine that keeps nothing on disk.
+        </p>
+      </div>
+
+      {byCategory.map((cat) => (
+        <div class="footer-col">
+          <h4>{cat.label}</h4>
+          {cat.tools.map((t: Tool) => (
+            <a href={`/tools/${t.id}`}>{t.title}</a>
+          ))}
+        </div>
+      ))}
+
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/#tools">All tools</a>
+        <a href="/login">Log in</a>
+        <a href="/signup">Sign up</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© {year} DocFlow. All rights reserved.</span>
+      <span>Files are processed in memory and never stored.</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: #16182b;
+    color: #c3c6d8;
+    padding: 72px 0 32px;
+    margin-top: 0;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2.2fr repeat(5, 1fr);
+    gap: 40px;
+  }
+
+  .footer-brand .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 19px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .footer-brand p {
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #8f93ad;
+    max-width: 280px;
+  }
+
+  .footer-col h4 {
+    color: #fff;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .footer-col a {
+    display: block;
+    font-size: 14px;
+    padding: 5px 0;
+    color: #a7abC4;
+    color: #a7abc4;
+  }
+
+  .footer-col a:hover {
+    color: #fff;
+  }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-top: 1px solid #2a2d45;
+    margin-top: 56px;
+    padding-top: 24px;
+    font-size: 13px;
+    color: #8f93ad;
+  }
+
+  @media (max-width: 1000px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
