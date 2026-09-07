@@ -1,0 +1,45 @@
+# Render Blueprint for the DocFlow backend.
+#
+# Deploy: in Render, New -> Blueprint -> pick this repo. Render reads this file
+# from the repo root's default branch, so the service configures itself.
+#
+# The repo root is the Flutter project, so rootDir points into docflow/backend.
+# The three `sync: false` secrets are prompted for during blueprint setup —
+# they must never be committed.
+
+services:
+  - type: web
+    name: docflow-backend
+    runtime: node
+    rootDir: docflow/backend
+    plan: free
+    region: frankfurt # closest to the users; the engine is on Azure anyway
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Stirling-PDF engine (Azure Container Apps). No API key is set on this
+      # instance, so STIRLING_API_KEY is intentionally absent.
+      - key: STIRLING_BASE_URL
+        value: https://stirling-pdf-engine.wonderfulmeadow-60f4708c.eastus.azurecontainerapps.io
+
+      # Firebase service-account JSON, base64-encoded:
+      #   Firebase console -> Project settings -> Service accounts ->
+      #   Generate new private key -> base64 -w0 key.json
+      - key: FIREBASE_SERVICE_ACCOUNT_B64
+        sync: false
+
+      # Comma-separated list of allowed browser origins (the deployed
+      # docflow-web domain, plus http://localhost:4321 for local dev).
+      - key: CORS_ORIGINS
+        sync: false
+
+      # The mobile app posts Firebase ID tokens; Render's free tier sits behind
+      # a proxy, so trust it for rate limiting.
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "30"

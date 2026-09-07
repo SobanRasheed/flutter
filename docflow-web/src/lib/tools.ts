@@ -615,28 +615,8 @@ export const TOOLS: Tool[] = [
       'Download the .cbz archive.',
     ],
   },
-  {
-    id: 'pdf-to-cbr',
-    title: 'PDF to CBR',
-    description: 'Render PDF pages as a comic book archive (CBR).',
-    from: 'PDF',
-    to: 'CBR',
-    icon: 'archive',
-    color: AMBER,
-    tint: AMBER_TINT,
-    category: 'convert',
-    multiFile: false,
-    minFiles: 1,
-    accept: ['pdf'],
-    options: [
-      { type: 'number', key: 'dpi', label: 'Resolution (DPI)', min: 72, max: 600, step: 1, default: '150' },
-    ],
-    steps: [
-      'Upload the PDF.',
-      'Pick the resolution for the page images.',
-      'Download the .cbr archive.',
-    ],
-  },
+  // No "PDF to CBR" here: the engine's RAR-writing endpoint is disabled in
+  // the deployment we run against, so it can never produce a file.
 
   /* ------------------------------ Organize ----------------------------- */
   {
@@ -1127,7 +1107,7 @@ export const TOOLS: Tool[] = [
     title: 'Poster Split',
     description: 'Split one page across multiple sheets for poster printing.',
     from: 'PDF',
-    to: 'PDF',
+    to: 'ZIP',
     icon: 'printer',
     color: BLUE,
     tint: BLUE_TINT,
@@ -1157,7 +1137,7 @@ export const TOOLS: Tool[] = [
     steps: [
       'Upload the one-page poster PDF.',
       'Choose the sheet size and grid (e.g. 2×2).',
-      'Download the multi-page PDF and print, trim, assemble.',
+      'Download the zip of tile PDFs and print, trim, assemble.',
     ],
   },
 
@@ -1349,7 +1329,7 @@ export const TOOLS: Tool[] = [
     title: 'Remove Blank Pages',
     description: 'Detect and delete blank pages from scans.',
     from: 'PDF',
-    to: 'PDF',
+    to: 'ZIP',
     icon: 'eraser',
     color: VIOLET,
     tint: VIOLET_TINT,
@@ -1364,7 +1344,7 @@ export const TOOLS: Tool[] = [
     steps: [
       'Upload the scanned PDF.',
       'Set how white a page must be to count as blank.',
-      'Download the PDF without the empties.',
+      'Download the zip — your cleaned document is the “nonBlankPages” PDF inside; the blank pages are the other one.',
     ],
   },
   {

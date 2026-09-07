@@ -404,14 +404,10 @@ export const TOOLS = {
     outputName: (files) => rename(files[0].originalname, 'cbz'),
   },
 
-  'pdf-to-cbr': {
-    endpoint: '/api/v1/convert/pdf/cbr',
-    accepts: [PDF],
-    multiFile: false,
-    contentType: 'application/vnd.comicbook-rar',
-    fields: (body) => ({ dpi: String(clampInt(body.dpi, 72, 600, 150)) }),
-    outputName: (files) => rename(files[0].originalname, 'cbr'),
-  },
+  // NOTE: Stirling also offers PDF -> CBR, but that endpoint answers 403
+  // "This endpoint is disabled" on the engine we deploy against (RAR writing
+  // is switched off), so it is deliberately not registered — it would 502 for
+  // every user. cbr-to-pdf below IS enabled and works on real .cbr files.
 
   'rotate-pdf': {
     endpoint: '/api/v1/general/rotate-pdf',
@@ -634,7 +630,9 @@ export const TOOLS = {
     endpoint: '/api/v1/general/split-for-poster-print',
     accepts: [PDF],
     multiFile: false,
-    contentType: PDF,
+    // Verified against 2.14.3: the response is a zip holding one PDF per
+    // poster tile (sample_poster.pdf), even for a single page.
+    contentType: ZIP,
     fields: (body) => ({
       pageSize: ['A0', 'A1', 'A2', 'A3', 'A4', 'LETTER', 'LEGAL'].includes(body.pageSize)
         ? body.pageSize
@@ -643,7 +641,7 @@ export const TOOLS = {
       yFactor: String(clampInt(body.yFactor, 1, 10, 2)),
       rightToLeft: body.rightToLeft === 'true' ? 'true' : 'false',
     }),
-    outputName: (files) => rename(files[0].originalname, 'pdf'),
+    outputName: (files) => rename(files[0].originalname, 'zip'),
   },
 
   'unlock-pdf': {
@@ -771,7 +769,11 @@ export const TOOLS = {
     accepts: [PDF],
     multiFile: false,
     contentType: ZIP,
-    fields: () => ({}),
+    // format is required by the endpoint — omitting it answers
+    // 400 "formatName == null!" (verified against 2.14.3).
+    fields: (body) => ({
+      format: ['png', 'jpeg', 'gif'].includes(body.format) ? body.format : 'png',
+    }),
     outputName: (files) => rename(files[0].originalname, 'zip'),
   },
 
@@ -794,12 +796,17 @@ export const TOOLS = {
     endpoint: '/api/v1/misc/remove-blanks',
     accepts: [PDF],
     multiFile: false,
-    contentType: PDF,
+    // The OpenAPI doc claims Output:PDF, but the live 2.14.3 engine answers
+    // with a zip holding two PDFs — <name>_nonBlankPages.pdf (the cleaned
+    // document) and <name>_blankPages.pdf (what was removed). Declared as a
+    // zip so the download keeps its real extension; the web catalog's steps
+    // tell the user which entry is their document.
+    contentType: ZIP,
     fields: (body) => ({
       threshold: String(clampInt(body.threshold, 1, 100, 10)),
       whitePercent: String(clampFloat(body.whitePercent, 0, 100, 99.9)),
     }),
-    outputName: (files) => files[0].originalname || 'NoBlanks.pdf',
+    outputName: (files) => rename(files[0].originalname || 'NoBlanks.pdf', 'zip'),
   },
 
   'auto-rename': {
